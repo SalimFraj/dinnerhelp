@@ -1,0 +1,205 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { ShoppingList, ShoppingItem, FavoriteStore } from '../types';
+
+interface ShoppingState {
+    lists: ShoppingList[];
+    favoriteStores: FavoriteStore[];
+    activeListId: string | null;
+
+    // List management
+    createList: (name: string) => string;
+    deleteList: (id: string) => void;
+    setActiveList: (id: string) => void;
+    getActiveList: () => ShoppingList | null;
+
+    // Item management
+    addItem: (listId: string, item: Omit<ShoppingItem, 'id'>) => void;
+    updateItem: (listId: string, itemId: string, updates: Partial<ShoppingItem>) => void;
+    removeItem: (listId: string, itemId: string) => void;
+    toggleItemChecked: (listId: string, itemId: string) => void;
+    clearCheckedItems: (listId: string) => void;
+
+    // Bulk operations
+    addItemsFromRecipe: (listId: string, items: Omit<ShoppingItem, 'id'>[]) => void;
+
+    // Store management
+    addFavoriteStore: (store: Omit<FavoriteStore, 'id'>) => void;
+    removeFavoriteStore: (id: string) => void;
+}
+
+// Category mapping for smart organization
+const categoryOrder: Record<string, number> = {
+    produce: 1,
+    bakery: 2,
+    dairy: 3,
+    meat: 4,
+    frozen: 5,
+    pantry: 6,
+    beverages: 7,
+    household: 8,
+    other: 9,
+};
+
+export const useShoppingStore = create<ShoppingState>()(
+    persist(
+        (set, get) => ({
+            lists: [],
+            favoriteStores: [],
+            activeListId: null,
+
+            createList: (name) => {
+                const id = crypto.randomUUID();
+                const newList: ShoppingList = {
+                    id,
+                    name,
+                    items: [],
+                    createdAt: new Date().toISOString(),
+                    isActive: true,
+                };
+
+                set((state) => ({
+                    lists: [
+                        ...state.lists.map((l) => ({ ...l, isActive: false })),
+                        newList,
+                    ],
+                    activeListId: id,
+                }));
+
+                return id;
+            },
+
+            deleteList: (id) => {
+                set((state) => ({
+                    lists: state.lists.filter((l) => l.id !== id),
+                    activeListId: state.activeListId === id ? null : state.activeListId,
+                }));
+            },
+
+            setActiveList: (id) => {
+                set((state) => ({
+                    lists: state.lists.map((l) => ({
+                        ...l,
+                        isActive: l.id === id,
+                    })),
+                    activeListId: id,
+                }));
+            },
+
+            getActiveList: () => {
+                const state = get();
+                return state.lists.find((l) => l.id === state.activeListId) || null;
+            },
+
+            addItem: (listId, item) => {
+                const newItem: ShoppingItem = {
+                    ...item,
+                    id: crypto.randomUUID(),
+                };
+
+                set((state) => ({
+                    lists: state.lists.map((list) => {
+                        if (list.id !== listId) return list;
+
+                        // Check for existing item to aggregate
+                        const existingIndex = list.items.findIndex(
+                            (i) => i.name.toLowerCase() === item.name.toLowerCase() && i.unit === item.unit
+                        );
+
+                        if (existingIndex >= 0) {
+                            const updated = [...list.items];
+                            updated[existingIndex] = {
+                                ...updated[existingIndex],
+                                quantity: updated[existingIndex].quantity + item.quantity,
+                            };
+                            return { ...list, items: updated };
+                        }
+
+                        // Add new item and sort by category
+                        const items = [...list.items, newItem].sort(
+                            (a, b) => (categoryOrder[a.category] || 9) - (categoryOrder[b.category] || 9)
+                        );
+
+                        return { ...list, items };
+                    }),
+                }));
+            },
+
+            updateItem: (listId, itemId, updates) => {
+                set((state) => ({
+                    lists: state.lists.map((list) => {
+                        if (list.id !== listId) return list;
+                        return {
+                            ...list,
+                            items: list.items.map((item) =>
+                                item.id === itemId ? { ...item, ...updates } : item
+                            ),
+                        };
+                    }),
+                }));
+            },
+
+            removeItem: (listId, itemId) => {
+                set((state) => ({
+                    lists: state.lists.map((list) => {
+                        if (list.id !== listId) return list;
+                        return {
+                            ...list,
+                            items: list.items.filter((item) => item.id !== itemId),
+                        };
+                    }),
+                }));
+            },
+
+            toggleItemChecked: (listId, itemId) => {
+                set((state) => ({
+                    lists: state.lists.map((list) => {
+                        if (list.id !== listId) return list;
+                        return {
+                            ...list,
+                            items: list.items.map((item) =>
+                                item.id === itemId ? { ...item, checked: !item.checked } : item
+                            ),
+                        };
+                    }),
+                }));
+            },
+
+            clearCheckedItems: (listId) => {
+                set((state) => ({
+                    lists: state.lists.map((list) => {
+                        if (list.id !== listId) return list;
+                        return {
+                            ...list,
+                            items: list.items.filter((item) => !item.checked),
+                        };
+                    }),
+                }));
+            },
+
+            addItemsFromRecipe: (listId, items) => {
+                items.forEach((item) => {
+                    get().addItem(listId, item);
+                });
+            },
+
+            addFavoriteStore: (store) => {
+                set((state) => ({
+                    favoriteStores: [
+                        ...state.favoriteStores,
+                        { ...store, id: crypto.randomUUID() },
+                    ],
+                }));
+            },
+
+            removeFavoriteStore: (id) => {
+                set((state) => ({
+                    favoriteStores: state.favoriteStores.filter((s) => s.id !== id),
+                }));
+            },
+        }),
+        {
+            name: 'dinnerhelp-shopping',
+        }
+    )
+);

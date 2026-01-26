@@ -1,0 +1,46 @@
+.add-ingredient-modal {
+    max-width: 440px;
+}
+
+.add-ingredient-modal .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+
+.add-ingredient-modal .modal-footer {
+    margin-top: var(--space-2);
+    padding: 0;
+    border-top: none;
+}
+
+/* Select styling */
+.add-ingredient-modal select.input {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 40px;
+}
+
+.add-ingredient-modal select.input option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* Date input */
+.add-ingredient-modal input[type="date"] {
+    cursor: pointer;
+}
+
+.add-ingredient-modal input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+    cursor: pointer;
+}

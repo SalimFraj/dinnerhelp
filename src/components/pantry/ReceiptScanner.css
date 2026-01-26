@@ -1,0 +1,174 @@
+.receipt-modal {
+    max-width: 440px;
+    max-height: 85vh;
+}
+
+.receipt-modal .modal-body {
+    overflow-y: auto;
+}
+
+.receipt-upload {
+    padding: var(--space-4);
+}
+
+.file-input {
+    display: none;
+}
+
+.upload-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-8);
+    border: 2px dashed var(--glass-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: center;
+}
+
+.upload-zone:hover {
+    border-color: var(--color-primary);
+    background: rgba(249, 115, 22, 0.05);
+}
+
+.upload-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--bg-tertiary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
+}
+
+.upload-zone h3 {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.upload-zone p {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+}
+
+/* Processing */
+.receipt-processing {
+    position: relative;
+}
+
+.receipt-preview {
+    width: 100%;
+    max-height: 300px;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    opacity: 0.5;
+}
+
+.processing-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: var(--radius-md);
+}
+
+.processing-overlay p {
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+}
+
+.progress-bar {
+    width: 200px;
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--color-primary);
+    transition: width 0.3s ease;
+}
+
+/* Extracted Items */
+.extracted-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.items-instruction {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.items-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.item-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.item-checkbox:hover {
+    background: var(--bg-elevated);
+}
+
+.item-checkbox input {
+    display: none;
+}
+
+.checkmark {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--text-tertiary);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.item-checkbox input:checked+.checkmark {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+.item-name {
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    text-transform: capitalize;
+}
+
+.items-actions {
+    display: flex;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--glass-border);
+}
+
+.items-actions .btn {
+    flex: 1;
+}

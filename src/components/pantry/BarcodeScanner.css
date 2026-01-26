@@ -1,0 +1,104 @@
+.barcode-modal {
+    max-width: 440px;
+}
+
+.scanner-instruction {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-4);
+}
+
+.barcode-reader {
+    width: 100%;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+/* Override html5-qrcode styles */
+#barcode-reader {
+    border: none !important;
+}
+
+#barcode-reader__scan_region {
+    background: var(--bg-tertiary) !important;
+}
+
+#barcode-reader__dashboard {
+    background: transparent !important;
+}
+
+#barcode-reader__dashboard_section_swaplink {
+    color: var(--color-primary) !important;
+}
+
+#barcode-reader__dashboard button {
+    background: var(--color-primary) !important;
+    border: none !important;
+    color: white !important;
+    padding: var(--space-2) var(--space-4) !important;
+    border-radius: var(--radius-md) !important;
+    cursor: pointer !important;
+}
+
+#barcode-reader select {
+    background: var(--bg-tertiary) !important;
+    border: 1px solid var(--glass-border) !important;
+    color: var(--text-primary) !important;
+    padding: var(--space-2) !important;
+    border-radius: var(--radius-md) !important;
+}
+
+.scanner-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-8);
+    color: var(--text-secondary);
+}
+
+.scanner-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-8);
+    text-align: center;
+    color: var(--color-error);
+}
+
+.scanner-error p {
+    color: var(--text-secondary);
+}
+
+.scanned-product {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    padding: var(--space-4);
+}
+
+.product-info {
+    text-align: center;
+}
+
+.product-info h3 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.product-brand {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+}
+
+.product-actions {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.product-actions .btn {
+    flex: 1;
+}
