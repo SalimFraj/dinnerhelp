@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     Home,
@@ -6,7 +6,7 @@ import {
     UtensilsCrossed,
     ShoppingCart,
     Calendar,
-    Mic
+    Sparkles
 } from 'lucide-react';
 import { useUIStore } from '../stores';
 import Toast from './ui/Toast';
@@ -23,7 +23,10 @@ const navItems = [
 
 export default function Layout() {
     const location = useLocation();
-    const { toasts, isVoiceListening, setVoiceListening } = useUIStore();
+    const navigate = useNavigate();
+    const { toasts, isVoiceListening } = useUIStore();
+
+    const isOnChatPage = location.pathname === '/chat';
 
     return (
         <div className="layout">
@@ -39,15 +42,16 @@ export default function Layout() {
                 </motion.div>
             </main>
 
-            {/* Voice FAB */}
-            <button
-                className={`fab voice-fab ${isVoiceListening ? 'listening' : ''}`}
-                onClick={() => setVoiceListening(true)}
-                aria-label="Voice command"
-            >
-                <Mic size={24} />
-                {isVoiceListening && <span className="voice-pulse" />}
-            </button>
+            {/* AI Chat FAB - hidden when on chat page */}
+            {!isOnChatPage && (
+                <button
+                    className="fab chat-fab"
+                    onClick={() => navigate('/chat')}
+                    aria-label="AI Chat"
+                >
+                    <Sparkles size={24} />
+                </button>
+            )}
 
             {/* Bottom Navigation */}
             <nav className="nav-bottom">

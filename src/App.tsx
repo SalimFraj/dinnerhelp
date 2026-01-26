@@ -7,6 +7,7 @@ import Recipes from './pages/Recipes';
 import Shopping from './pages/Shopping';
 import MealPlan from './pages/MealPlan';
 import RecipeDetail from './pages/RecipeDetail';
+import Chat from './pages/Chat';
 import './index.css';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
             <Route path="recipes/:id" element={<RecipeDetail />} />
             <Route path="shopping" element={<Shopping />} />
             <Route path="meal-plan" element={<MealPlan />} />
+            <Route path="chat" element={<Chat />} />
           </Route>
         </Routes>
       </AnimatePresence>
