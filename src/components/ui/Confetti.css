@@ -1,0 +1,59 @@
+.confetti-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+.confetti-piece {
+    position: absolute;
+    top: -10px;
+    width: 10px;
+    height: 10px;
+    opacity: 0;
+    animation: confetti-fall 3s ease-out forwards;
+}
+
+.confetti-piece:nth-child(odd) {
+    border-radius: 50%;
+}
+
+.confetti-piece:nth-child(even) {
+    border-radius: 2px;
+}
+
+@keyframes confetti-fall {
+    0% {
+        opacity: 1;
+        transform: translateY(0) rotate(0deg) scale(1);
+    }
+
+    25% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(100vh) rotate(720deg) scale(0.5);
+    }
+}
+
+/* Add some variation */
+.confetti-piece:nth-child(3n) {
+    width: 8px;
+    height: 16px;
+    animation-duration: 2.5s;
+}
+
+.confetti-piece:nth-child(5n) {
+    width: 6px;
+    height: 6px;
+    animation-duration: 3.5s;
+}
+
+.confetti-piece:nth-child(7n) {
+    width: 12px;
+    height: 8px;
+    animation-duration: 2.8s;
+}
