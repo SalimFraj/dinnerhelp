@@ -23,30 +23,45 @@ export default function VoiceModal() {
 
         // Add ingredient command
         if (lowerText.startsWith('add ')) {
-            const ingredient = lowerText.replace('add ', '').trim();
-            if (ingredient) {
-                // Parse quantity if present (e.g., "add 2 pounds of chicken")
-                const quantityMatch = ingredient.match(/^(\d+(?:\.\d+)?)\s*(pounds?|lbs?|oz|ounces?|cups?|tbsp|tsp|kg|g|grams?)?\s*(?:of\s+)?(.+)/i);
+            const ingredientText = lowerText.replace('add ', '').trim();
+            if (ingredientText) {
+                // Split by "and", ",", "plus", or "&" to handle multiple ingredients
+                const ingredientParts = ingredientText
+                    .split(/\s*(?:,|\band\b|\bplus\b|&)\s*/i)
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
 
-                if (quantityMatch) {
-                    const [, qty, unit, name] = quantityMatch;
-                    addIngredient({
-                        name: name.trim(),
-                        quantity: parseFloat(qty),
-                        unit: unit || 'unit',
-                        category: 'other',
-                    });
-                } else {
-                    addIngredient({
-                        name: ingredient,
-                        quantity: 1,
-                        unit: 'unit',
-                        category: 'other',
-                    });
-                }
+                const addedItems: string[] = [];
+
+                ingredientParts.forEach(ingredient => {
+                    // Parse quantity if present (e.g., "2 pounds of chicken")
+                    const quantityMatch = ingredient.match(/^(\d+(?:\.\d+)?)\s*(pounds?|lbs?|oz|ounces?|cups?|tbsp|tsp|kg|g|grams?)?(?:\s+of\s+|\s+)?(.+)/i);
+
+                    if (quantityMatch) {
+                        const [, qty, unit, name] = quantityMatch;
+                        addIngredient({
+                            name: name.trim(),
+                            quantity: parseFloat(qty),
+                            unit: unit || 'unit',
+                            category: 'other',
+                        });
+                        addedItems.push(name.trim());
+                    } else {
+                        addIngredient({
+                            name: ingredient,
+                            quantity: 1,
+                            unit: 'unit',
+                            category: 'other',
+                        });
+                        addedItems.push(ingredient);
+                    }
+                });
 
                 setStatus('success');
-                addToast({ type: 'success', message: `Added ${ingredient} to pantry` });
+                const message = addedItems.length > 1
+                    ? `Added ${addedItems.length} items: ${addedItems.join(', ')}`
+                    : `Added ${addedItems[0]} to pantry`;
+                addToast({ type: 'success', message });
                 setTimeout(() => setVoiceListening(false), 1500);
                 return;
             }
@@ -78,6 +93,12 @@ export default function VoiceModal() {
                 setTimeout(() => setVoiceListening(false), 500);
                 return;
             }
+            if (lowerText.includes('chat') || lowerText.includes('ai')) {
+                navigate('/chat');
+                setStatus('success');
+                setTimeout(() => setVoiceListening(false), 500);
+                return;
+            }
             if (lowerText.includes('home')) {
                 navigate('/');
                 setStatus('success');
@@ -86,11 +107,13 @@ export default function VoiceModal() {
             }
         }
 
-        // Recipe search command
-        if (lowerText.includes('what can i make') || lowerText.includes('suggest') || lowerText.includes('recipe for')) {
-            navigate('/recipes');
+        // AI Chat commands - redirect to chat page
+        if (lowerText.includes('what can i make') || lowerText.includes('what should i cook') ||
+            lowerText.includes('dinner idea') || lowerText.includes('suggest') ||
+            lowerText.includes('help me cook') || lowerText.includes('ask ai')) {
+            navigate('/chat');
             setStatus('success');
-            addToast({ type: 'info', message: 'Searching for recipes...' });
+            addToast({ type: 'info', message: 'Opening AI Chat...' });
             setTimeout(() => setVoiceListening(false), 500);
             return;
         }
