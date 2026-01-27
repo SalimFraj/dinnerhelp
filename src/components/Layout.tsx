@@ -11,6 +11,7 @@ import {
 import { useUIStore } from '../stores';
 import Toast from './ui/Toast';
 import VoiceModal from './voice/VoiceModal';
+import InstallPrompt from './ui/InstallPrompt';
 import './Layout.css';
 
 const navItems = [
@@ -81,6 +82,9 @@ export default function Layout() {
 
             {/* Voice Modal */}
             {isVoiceListening && <VoiceModal />}
+
+            {/* PWA Install Prompt */}
+            <InstallPrompt />
         </div>
     );
 }
