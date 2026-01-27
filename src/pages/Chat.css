@@ -233,6 +233,13 @@
     color: var(--primary-400);
 }
 
+.chat-h2 {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    margin: var(--space-4) 0 var(--space-2);
+    color: var(--text-primary);
+}
+
 .chat-h3 {
     font-size: var(--text-base);
     font-weight: 600;
@@ -247,13 +254,38 @@
     color: var(--text-primary);
 }
 
+.chat-hr {
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+    margin: var(--space-3) 0;
+}
+
 .chat-list-item {
-    padding-left: var(--space-4);
     margin: var(--space-1) 0;
+    padding-left: 0;
+}
+
+.chat-list-item.numbered {
+    padding-left: var(--space-2);
 }
 
 .chat-list-item.bullet {
-    padding-left: var(--space-3);
+    display: flex;
+    gap: var(--space-2);
+}
+
+.bullet-point {
+    color: var(--primary-500);
+    font-weight: bold;
+}
+
+.chat-inline-code {
+    background: var(--surface-secondary);
+    padding: 0.1em 0.4em;
+    border-radius: var(--radius-sm);
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9em;
+    color: var(--accent-500);
 }
 
 /* Typing Indicator */

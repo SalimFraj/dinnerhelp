@@ -101,32 +101,75 @@ export default function Chat() {
     };
 
     const formatMessage = (content: string) => {
-        // Basic markdown-like formatting
+        // Enhanced markdown-like formatting
         return content
             .split('\n')
             .map((line, i) => {
                 // Headers
                 if (line.startsWith('### ')) {
-                    return <h4 key={i} className="chat-h4">{line.slice(4)}</h4>;
+                    return <h4 key={i} className="chat-h4">{formatInline(line.slice(4))}</h4>;
                 }
                 if (line.startsWith('## ')) {
-                    return <h3 key={i} className="chat-h3">{line.slice(3)}</h3>;
+                    return <h3 key={i} className="chat-h3">{formatInline(line.slice(3))}</h3>;
                 }
-                // Bold
-                line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                // Lists
+                if (line.startsWith('# ')) {
+                    return <h2 key={i} className="chat-h2">{formatInline(line.slice(2))}</h2>;
+                }
+
+                // Horizontal rule
+                if (line.match(/^[-]{3,}$/)) {
+                    return <hr key={i} className="chat-hr" />;
+                }
+
+                // Numbered lists
                 if (line.match(/^\d+\.\s/)) {
-                    return <p key={i} className="chat-list-item" dangerouslySetInnerHTML={{ __html: line }} />;
+                    return (
+                        <p key={i} className="chat-list-item numbered">
+                            {formatInline(line)}
+                        </p>
+                    );
                 }
-                if (line.startsWith('- ')) {
-                    return <p key={i} className="chat-list-item bullet" dangerouslySetInnerHTML={{ __html: '• ' + line.slice(2) }} />;
+
+                // Bullet lists
+                if (line.startsWith('- ') || line.startsWith('* ')) {
+                    return (
+                        <p key={i} className="chat-list-item bullet">
+                            <span className="bullet-point">•</span>
+                            {formatInline(line.slice(2))}
+                        </p>
+                    );
                 }
+
                 // Empty lines
                 if (!line.trim()) {
                     return <br key={i} />;
                 }
-                return <p key={i} dangerouslySetInnerHTML={{ __html: line }} />;
+
+                // Regular paragraphs
+                return <p key={i}>{formatInline(line)}</p>;
             });
+    };
+
+    // Format inline elements (bold, italic, code)
+    const formatInline = (text: string) => {
+        // Split on patterns but preserve them
+        const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+
+        return parts.map((part, i) => {
+            // Bold
+            if (part.startsWith('**') && part.endsWith('**')) {
+                return <strong key={i}>{part.slice(2, -2)}</strong>;
+            }
+            // Italic
+            if (part.startsWith('*') && part.endsWith('*') && !part.startsWith('**')) {
+                return <em key={i}>{part.slice(1, -1)}</em>;
+            }
+            // Inline code
+            if (part.startsWith('`') && part.endsWith('`')) {
+                return <code key={i} className="chat-inline-code">{part.slice(1, -1)}</code>;
+            }
+            return part;
+        });
     };
 
     return (
