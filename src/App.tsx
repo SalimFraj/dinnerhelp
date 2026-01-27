@@ -8,6 +8,7 @@ import Shopping from './pages/Shopping';
 import MealPlan from './pages/MealPlan';
 import RecipeDetail from './pages/RecipeDetail';
 import Chat from './pages/Chat';
+import Auth from './pages/Auth';
 import './index.css';
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
     <BrowserRouter>
       <AnimatePresence mode="wait">
         <Routes>
+          <Route path="/auth" element={<Auth />} />
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="pantry" element={<Pantry />} />
@@ -31,3 +33,4 @@ function App() {
 }
 
 export default App;
+

@@ -1,0 +1,222 @@
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-tertiary) 100%);
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+/* Header */
+.auth-header {
+    text-align: center;
+    margin-bottom: var(--space-2);
+}
+
+.auth-logo {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--space-4);
+    background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.auth-header h1 {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.auth-header p {
+    margin-top: var(--space-2);
+    color: var(--text-muted);
+}
+
+/* Error */
+.auth-error {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-lg);
+    color: var(--error-500);
+    font-size: var(--text-sm);
+}
+
+/* Form */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.form-group label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: var(--space-4);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-11);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    color: var(--text-primary);
+    font-size: var(--text-base);
+    transition: all var(--transition-fast);
+}
+
+.input-wrapper input:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.input-wrapper input::placeholder {
+    color: var(--text-muted);
+}
+
+.password-toggle {
+    position: absolute;
+    right: var(--space-3);
+    padding: var(--space-2);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.password-toggle:hover {
+    color: var(--text-primary);
+}
+
+.auth-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Divider */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+}
+
+.auth-divider span {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+/* Google Button */
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-subtle);
+}
+
+.google-btn:hover {
+    background: var(--surface-hover);
+}
+
+/* Toggle */
+.auth-toggle {
+    text-align: center;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+.auth-toggle button {
+    margin-left: var(--space-1);
+    background: none;
+    border: none;
+    color: var(--primary-500);
+    font-weight: 600;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.auth-toggle button:hover {
+    color: var(--primary-400);
+}
+
+/* Skip */
+.auth-skip {
+    text-align: center;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    padding: var(--space-2);
+    transition: color var(--transition-fast);
+}
+
+.auth-skip:hover {
+    color: var(--text-secondary);
+}
