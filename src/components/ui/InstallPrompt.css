@@ -3,7 +3,7 @@
     bottom: 90px;
     left: var(--space-4);
     right: var(--space-4);
-    z-index: 100;
+    z-index: 150;
 
     display: flex;
     align-items: center;
@@ -15,7 +15,7 @@
     border-radius: var(--radius-xl);
     padding: var(--space-4);
 
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
 .install-dismiss {
@@ -90,6 +90,70 @@
 
 .install-button:hover {
     transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+}
+
+/* iOS Guide Styles */
+.install-prompt.ios-guide {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--space-5);
+}
+
+.ios-guide-content {
+    padding-right: var(--space-6);
+}
+
+.ios-guide-content h4 {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-4);
+}
+
+.ios-steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.ios-steps li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.ios-steps li svg {
+    flex-shrink: 0;
+    color: var(--primary-500);
+}
+
+.ios-steps li strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.install-got-it {
+    margin-top: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+    border: none;
+    border-radius: var(--radius-lg);
+    color: white;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    width: 100%;
+}
+
+.install-got-it:hover {
+    transform: scale(1.02);
     box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
 }
 
