@@ -11,7 +11,7 @@ const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpee
 export default function VoiceModal() {
     const navigate = useNavigate();
     const { setVoiceListening, addToast } = useUIStore();
-    const { addIngredient } = usePantryStore();
+    const { addIngredientSmart } = usePantryStore();
     const [transcript, setTranscript] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [status, setStatus] = useState<'listening' | 'processing' | 'success' | 'error'>('listening');
@@ -39,20 +39,12 @@ export default function VoiceModal() {
 
                     if (quantityMatch) {
                         const [, qty, unit, name] = quantityMatch;
-                        addIngredient({
-                            name: name.trim(),
-                            quantity: parseFloat(qty),
-                            unit: unit || 'unit',
-                            category: 'other',
-                        });
+                        // Use smart add with auto-categorization
+                        addIngredientSmart(name.trim(), parseFloat(qty), unit || undefined);
                         addedItems.push(name.trim());
                     } else {
-                        addIngredient({
-                            name: ingredient,
-                            quantity: 1,
-                            unit: 'unit',
-                            category: 'other',
-                        });
+                        // Smart add auto-detects category and unit
+                        addIngredientSmart(ingredient);
                         addedItems.push(ingredient);
                     }
                 });
@@ -126,7 +118,7 @@ export default function VoiceModal() {
             setIsProcessing(false);
             setTranscript('');
         }, 2000);
-    }, [addIngredient, addToast, navigate, setVoiceListening]);
+    }, [addIngredientSmart, addToast, navigate, setVoiceListening]);
 
     useEffect(() => {
         if (!SpeechRecognition) {
