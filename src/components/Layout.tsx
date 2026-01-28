@@ -6,7 +6,8 @@ import {
     UtensilsCrossed,
     ShoppingCart,
     Calendar,
-    Sparkles
+    Sparkles,
+    Mic
 } from 'lucide-react';
 import { useUIStore } from '../stores';
 import Toast from './ui/Toast';
@@ -25,7 +26,7 @@ const navItems = [
 export default function Layout() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { toasts, isVoiceListening } = useUIStore();
+    const { toasts, isVoiceListening, setVoiceListening } = useUIStore();
 
     const isOnChatPage = location.pathname === '/chat';
 
@@ -43,15 +44,27 @@ export default function Layout() {
                 </motion.div>
             </main>
 
-            {/* AI Chat FAB - hidden when on chat page */}
+            {/* FAB Group - Voice + AI */}
             {!isOnChatPage && (
-                <button
-                    className="fab chat-fab"
-                    onClick={() => navigate('/chat')}
-                    aria-label="AI Chat"
-                >
-                    <Sparkles size={24} />
-                </button>
+                <div className="fab-group">
+                    {/* Voice FAB */}
+                    <button
+                        className="fab voice-fab"
+                        onClick={() => setVoiceListening(true)}
+                        aria-label="Voice Input"
+                    >
+                        <Mic size={22} />
+                    </button>
+
+                    {/* AI Chat FAB */}
+                    <button
+                        className="fab chat-fab"
+                        onClick={() => navigate('/chat')}
+                        aria-label="AI Chat"
+                    >
+                        <Sparkles size={24} />
+                    </button>
+                </div>
             )}
 
             {/* Bottom Navigation */}

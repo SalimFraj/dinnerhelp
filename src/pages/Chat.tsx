@@ -174,28 +174,16 @@ export default function Chat() {
 
     return (
         <div className="page chat-page">
-            <header className="chat-header">
-                <div className="chat-header-content">
-                    <div className="chat-avatar">
-                        <Sparkles size={24} />
-                    </div>
-                    <div className="chat-header-text">
-                        <h1>DinnerHelp AI</h1>
-                        <span className="chat-status">
-                            {ingredients.length} ingredients in pantry
-                        </span>
-                    </div>
-                </div>
-                {messages.length > 0 && (
-                    <button
-                        className="btn btn-ghost btn-icon"
-                        onClick={clearMessages}
-                        title="Clear chat"
-                    >
-                        <Trash2 size={20} />
-                    </button>
-                )}
-            </header>
+            {/* Minimal header - just clear button */}
+            {messages.length > 0 && (
+                <button
+                    className="chat-clear-btn"
+                    onClick={clearMessages}
+                    title="Clear chat"
+                >
+                    <Trash2 size={18} />
+                </button>
+            )}
 
             <div className="chat-messages">
                 {messages.length === 0 ? (

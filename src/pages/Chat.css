@@ -9,45 +9,33 @@
     max-width: 100% !important;
     width: 100%;
     margin: 0;
+    position: relative;
 }
 
-/* Header */
-.chat-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-4);
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--glass-border);
-}
-
-.chat-header-content {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-}
-
-.chat-avatar {
-    width: 44px;
-    height: 44px;
+/* Minimal Clear Button */
+.chat-clear-btn {
+    position: absolute;
+    top: var(--space-3);
+    right: var(--space-3);
+    z-index: 10;
+    width: 36px;
+    height: 36px;
     border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    cursor: pointer;
+    transition: all var(--transition-fast);
 }
 
-.chat-header-text h1 {
-    font-size: var(--text-lg);
-    font-weight: 600;
-    margin: 0;
-}
-
-.chat-status {
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
+.chat-clear-btn:hover {
+    background: var(--surface-hover);
+    color: var(--error-500);
+    border-color: var(--error-500);
 }
 
 /* Messages Area */

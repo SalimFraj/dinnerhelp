@@ -3,19 +3,46 @@
     flex-direction: column;
     min-height: 100vh;
     min-height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    overflow: hidden;
 }
 
 .layout-main {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
-/* AI Chat FAB */
-.chat-fab {
+/* FAB Group */
+.fab-group {
     position: fixed;
     bottom: calc(80px + var(--space-4));
     right: var(--space-4);
     z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+/* Voice FAB */
+.voice-fab {
+    width: 48px;
+    height: 48px;
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.voice-fab:hover {
+    background: var(--surface-hover) !important;
+    transform: scale(1.05);
+}
+
+/* AI Chat FAB */
+.chat-fab {
     background: linear-gradient(135deg, var(--primary-500), var(--accent-500)) !important;
     box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
     animation: float 3s ease-in-out infinite;
