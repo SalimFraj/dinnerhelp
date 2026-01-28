@@ -276,6 +276,11 @@
     color: white;
 }
 
+.quick-action-icon-purple {
+    background: linear-gradient(135deg, #8b5cf6, #a855f7) !important;
+    color: white !important;
+}
+
 .quick-action-content {
     flex: 1;
 }

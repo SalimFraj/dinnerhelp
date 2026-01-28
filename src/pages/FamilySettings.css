@@ -1,0 +1,227 @@
+.family-page {
+    display: flex;
+    flex-direction: column;
+}
+
+.family-loading {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.family-error {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-lg);
+    color: var(--error-500);
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-4);
+}
+
+/* Setup View */
+.family-setup,
+.family-join {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--space-8) var(--space-4);
+}
+
+.family-setup-icon {
+    width: 96px;
+    height: 96px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-bottom: var(--space-6);
+}
+
+.family-setup h2,
+.family-join h2 {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    margin-bottom: var(--space-2);
+}
+
+.family-setup p,
+.family-join p {
+    color: var(--text-secondary);
+    max-width: 300px;
+    margin-bottom: var(--space-6);
+}
+
+.family-setup-form {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.family-input {
+    width: 100%;
+    padding: var(--space-4);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    color: var(--text-primary);
+    font-size: var(--text-lg);
+    text-align: center;
+}
+
+.family-input:focus {
+    outline: none;
+    border-color: var(--primary-500);
+}
+
+.family-code-input {
+    font-family: monospace;
+    font-size: var(--text-2xl);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+}
+
+.family-divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    width: 100%;
+    max-width: 320px;
+    margin: var(--space-6) 0;
+}
+
+.family-divider::before,
+.family-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-subtle);
+}
+
+.family-divider span {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+
+/* Empty State */
+.family-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--text-muted);
+    gap: var(--space-3);
+}
+
+.family-empty h2 {
+    color: var(--text-primary);
+}
+
+/* Household Info */
+.family-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.household-card {
+    background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+    text-align: center;
+    color: white;
+}
+
+.household-icon {
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--space-4);
+}
+
+.household-card h2 {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    margin-bottom: var(--space-1);
+}
+
+.household-card p {
+    opacity: 0.9;
+}
+
+/* Invite Section */
+.invite-section {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+}
+
+.invite-section h3 {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+}
+
+.invite-section>p {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-4);
+}
+
+.invite-code-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+}
+
+.invite-code {
+    font-family: monospace;
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--primary-500);
+}
+
+/* Leave Button */
+.leave-btn {
+    color: var(--error-500);
+    margin-top: var(--space-4);
+}
+
+.leave-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

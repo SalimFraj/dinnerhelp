@@ -10,6 +10,7 @@ import MealPlan from './pages/MealPlan';
 import RecipeDetail from './pages/RecipeDetail';
 import Chat from './pages/Chat';
 import Auth from './pages/Auth';
+import FamilySettings from './pages/FamilySettings';
 import { useAuthStore } from './stores/authStore';
 import './index.css';
 
@@ -76,6 +77,7 @@ function App() {
             <Route path="shopping" element={<Shopping />} />
             <Route path="meal-plan" element={<MealPlan />} />
             <Route path="chat" element={<Chat />} />
+            <Route path="family" element={<FamilySettings />} />
           </Route>
         </Routes>
       </AnimatePresence>

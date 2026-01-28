@@ -10,7 +10,8 @@ import {
     AlertTriangle,
     MessageCircle,
     User,
-    LogIn
+    LogIn,
+    Users
 } from 'lucide-react';
 import { usePantryStore, useRecipeStore, useMealPlanStore } from '../stores';
 import { useAuthStore } from '../stores/authStore';
@@ -154,6 +155,17 @@ export default function Dashboard() {
                             <div className="quick-action-content">
                                 <h3>Update Pantry</h3>
                                 <p>{ingredients.length} items</p>
+                            </div>
+                            <ArrowRight size={20} className="quick-action-arrow" />
+                        </Link>
+
+                        <Link to="/family" className="quick-action">
+                            <div className="quick-action-icon quick-action-icon-purple">
+                                <Users size={24} />
+                            </div>
+                            <div className="quick-action-content">
+                                <h3>Family Sharing</h3>
+                                <p>Share with household</p>
                             </div>
                             <ArrowRight size={20} className="quick-action-arrow" />
                         </Link>
