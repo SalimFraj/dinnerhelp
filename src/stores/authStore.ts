@@ -14,8 +14,10 @@ import {
     loadUserData,
     saveUserData,
     subscribeToUserData,
+    setCachedHouseholdId,
     type UserData,
 } from '../services/syncService';
+import { getUserHouseholdId } from '../services/householdService';
 import { usePantryStore } from './pantryStore';
 import { useShoppingStore } from './shoppingStore';
 import { useMealPlanStore } from './mealPlanStore';
@@ -57,6 +59,10 @@ export const useAuthStore = create<AuthState>()(
                     set({ user, isInitialized: true });
 
                     if (user && get().syncEnabled) {
+                        // Get and cache household ID for sync routing
+                        const householdId = await getUserHouseholdId(user.uid);
+                        setCachedHouseholdId(householdId);
+
                         // Load data from cloud when user logs in
                         await get().loadFromCloud();
 
@@ -68,6 +74,8 @@ export const useAuthStore = create<AuthState>()(
                                 console.log('Received cloud update:', data.lastSynced);
                             }
                         });
+                    } else {
+                        setCachedHouseholdId(null);
                     }
                 });
             },

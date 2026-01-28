@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useRecipeStore, usePantryStore, useShoppingStore, useMealPlanStore, useUIStore } from '../stores';
 import type { Recipe, MealType } from '../types';
+import { detectIngredientCategory } from '../services/categorizationService';
 import './RecipeDetail.css';
 
 export default function RecipeDetail() {
@@ -68,10 +69,27 @@ export default function RecipeDetail() {
             listId = createList('Shopping List');
         }
 
+        // Map ingredient categories to shopping categories
+        const categoryMap: Record<string, 'produce' | 'meat' | 'dairy' | 'bakery' | 'frozen' | 'pantry' | 'beverages' | 'household' | 'other'> = {
+            produce: 'produce',
+            meat: 'meat',
+            dairy: 'dairy',
+            grains: 'pantry',
+            canned: 'pantry',
+            frozen: 'frozen',
+            spices: 'pantry',
+            condiments: 'pantry',
+            beverages: 'beverages',
+            snacks: 'pantry',
+            other: 'other'
+        };
+
         missingIngredients.forEach(ing => {
+            const ingredientCat = detectIngredientCategory(ing.name);
+            const shoppingCat = categoryMap[ingredientCat] || 'other';
             addItem(listId!, {
                 name: ing.name,
-                category: 'other',
+                category: shoppingCat,
                 quantity: 1,
                 unit: ing.quantity || 'unit',
                 checked: false,

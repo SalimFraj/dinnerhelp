@@ -14,41 +14,20 @@
     overflow-x: hidden;
 }
 
-/* FAB Group */
-.fab-group {
+/* Voice FAB */
+.voice-fab {
     position: fixed;
     bottom: calc(80px + var(--space-4));
     right: var(--space-4);
     z-index: 50;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-}
-
-/* Voice FAB */
-.voice-fab {
-    width: 48px;
-    height: 48px;
-    background: var(--glass-bg) !important;
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
-    color: var(--text-primary);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.voice-fab:hover {
-    background: var(--surface-hover) !important;
-    transform: scale(1.05);
-}
-
-/* AI Chat FAB */
-.chat-fab {
+    width: 56px;
+    height: 56px;
     background: linear-gradient(135deg, var(--primary-500), var(--accent-500)) !important;
     box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
     animation: float 3s ease-in-out infinite;
 }
 
-.chat-fab:hover {
+.voice-fab:hover {
     transform: scale(1.1);
     box-shadow: 0 6px 30px rgba(99, 102, 241, 0.6);
 }

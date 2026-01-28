@@ -1,11 +1,10 @@
-import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     Home,
     ShoppingBasket,
     UtensilsCrossed,
     ShoppingCart,
-    Calendar,
     Sparkles,
     Mic
 } from 'lucide-react';
@@ -20,12 +19,11 @@ const navItems = [
     { path: '/pantry', icon: ShoppingBasket, label: 'Pantry' },
     { path: '/recipes', icon: UtensilsCrossed, label: 'Recipes' },
     { path: '/shopping', icon: ShoppingCart, label: 'Shop' },
-    { path: '/meal-plan', icon: Calendar, label: 'Plan' },
+    { path: '/chat', icon: Sparkles, label: 'AI' },
 ];
 
 export default function Layout() {
     const location = useLocation();
-    const navigate = useNavigate();
     const { toasts, isVoiceListening, setVoiceListening } = useUIStore();
 
     const isOnChatPage = location.pathname === '/chat';
@@ -44,27 +42,15 @@ export default function Layout() {
                 </motion.div>
             </main>
 
-            {/* FAB Group - Voice + AI */}
+            {/* Voice FAB - hidden on chat page */}
             {!isOnChatPage && (
-                <div className="fab-group">
-                    {/* Voice FAB */}
-                    <button
-                        className="fab voice-fab"
-                        onClick={() => setVoiceListening(true)}
-                        aria-label="Voice Input"
-                    >
-                        <Mic size={22} />
-                    </button>
-
-                    {/* AI Chat FAB */}
-                    <button
-                        className="fab chat-fab"
-                        onClick={() => navigate('/chat')}
-                        aria-label="AI Chat"
-                    >
-                        <Sparkles size={24} />
-                    </button>
-                </div>
+                <button
+                    className="fab voice-fab"
+                    onClick={() => setVoiceListening(true)}
+                    aria-label="Voice Input"
+                >
+                    <Mic size={22} />
+                </button>
             )}
 
             {/* Bottom Navigation */}
