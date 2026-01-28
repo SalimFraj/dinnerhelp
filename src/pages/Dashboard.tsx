@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     ChefHat,
     ShoppingBasket,
@@ -8,9 +8,12 @@ import {
     ArrowRight,
     TrendingUp,
     AlertTriangle,
-    MessageCircle
+    MessageCircle,
+    User,
+    LogIn
 } from 'lucide-react';
 import { usePantryStore, useRecipeStore, useMealPlanStore } from '../stores';
+import { useAuthStore } from '../stores/authStore';
 import './Dashboard.css';
 
 const container = {
@@ -27,9 +30,11 @@ const item = {
 };
 
 export default function Dashboard() {
+    const navigate = useNavigate();
     const { ingredients } = usePantryStore();
     const { getFavorites } = useRecipeStore();
     const { mealPlans } = useMealPlanStore();
+    const { user } = useAuthStore();
 
     const favorites = getFavorites();
     const today = new Date().toISOString().split('T')[0];
@@ -65,6 +70,24 @@ export default function Dashboard() {
                         <h1 className="hero-title">{greeting}! 👋</h1>
                         <p className="hero-subtitle">What's cooking today?</p>
                     </div>
+
+                    {/* User Button */}
+                    <button
+                        className="hero-user-btn"
+                        onClick={() => navigate('/auth')}
+                        title={user ? user.displayName || user.email || 'Account' : 'Sign In'}
+                    >
+                        {user ? (
+                            user.photoURL ? (
+                                <img src={user.photoURL} alt="Avatar" className="hero-user-avatar" />
+                            ) : (
+                                <User size={20} />
+                            )
+                        ) : (
+                            <LogIn size={20} />
+                        )}
+                    </button>
+
                     <div className="hero-glow" />
                 </motion.header>
 

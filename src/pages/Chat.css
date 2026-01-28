@@ -3,11 +3,12 @@
     flex-direction: column;
     height: calc(100vh - 80px);
     height: calc(100dvh - 80px);
-    /* Dynamic viewport height for mobile */
-    padding: 0;
+    padding: 0 !important;
+    padding-bottom: 0 !important;
     overflow: hidden;
-    max-width: 100%;
+    max-width: 100% !important;
     width: 100%;
+    margin: 0;
 }
 
 /* Header */

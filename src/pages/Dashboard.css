@@ -57,6 +57,38 @@
     pointer-events: none;
 }
 
+/* User Button in Hero */
+.hero-user-btn {
+    position: absolute;
+    top: var(--space-4);
+    right: var(--space-4);
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    z-index: 2;
+    overflow: hidden;
+}
+
+.hero-user-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+    border-color: var(--primary-500);
+}
+
+.hero-user-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 /* Section Styles */
 .dashboard-section {
     display: flex;
