@@ -220,3 +220,75 @@
 .auth-skip:hover {
     color: var(--text-secondary);
 }
+
+/* Back Button */
+.auth-back-btn {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: var(--space-2);
+    transition: color var(--transition-fast);
+}
+
+.auth-back-btn:hover {
+    color: var(--text-primary);
+}
+
+.auth-header {
+    position: relative;
+}
+
+/* Social Buttons */
+.auth-social-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+}
+
+.phone-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-subtle);
+}
+
+.phone-btn:hover {
+    background: var(--surface-hover);
+}
+
+/* Input Hint */
+.input-hint {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    margin-top: var(--space-1);
+}
+
+/* Account Info */
+.auth-account-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-6);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+}
+
+.account-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+}
+
+.account-email {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+}

@@ -6,6 +6,8 @@ import {
     signUp,
     signOut,
     signInWithGoogle,
+    sendPhoneOTP,
+    verifyPhoneOTP,
     onAuthStateChange,
 } from '../services/authService';
 import {
@@ -25,12 +27,15 @@ interface AuthState {
     isInitialized: boolean;
     syncEnabled: boolean;
     lastSynced: string | null;
+    phoneVerificationPending: boolean;
 
     // Actions
     initialize: () => void;
     login: (email: string, password: string) => Promise<void>;
     register: (email: string, password: string, name?: string) => Promise<void>;
     loginWithGoogle: () => Promise<void>;
+    sendPhoneCode: (phoneNumber: string, buttonId: string) => Promise<void>;
+    verifyPhoneCode: (code: string) => Promise<void>;
     logout: () => Promise<void>;
     syncToCloud: () => Promise<void>;
     loadFromCloud: () => Promise<void>;
@@ -45,6 +50,7 @@ export const useAuthStore = create<AuthState>()(
             isInitialized: false,
             syncEnabled: true,
             lastSynced: null,
+            phoneVerificationPending: false,
 
             initialize: () => {
                 onAuthStateChange(async (user) => {
@@ -94,6 +100,26 @@ export const useAuthStore = create<AuthState>()(
                 try {
                     const user = await signInWithGoogle();
                     set({ user });
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
+
+            sendPhoneCode: async (phoneNumber, buttonId) => {
+                set({ isLoading: true });
+                try {
+                    await sendPhoneOTP(phoneNumber, buttonId);
+                    set({ phoneVerificationPending: true });
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
+
+            verifyPhoneCode: async (code) => {
+                set({ isLoading: true });
+                try {
+                    const user = await verifyPhoneOTP(code);
+                    set({ user, phoneVerificationPending: false });
                 } finally {
                     set({ isLoading: false });
                 }

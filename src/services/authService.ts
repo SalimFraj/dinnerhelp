@@ -6,7 +6,10 @@ import {
     signOut as firebaseSignOut,
     onAuthStateChanged,
     updateProfile,
+    RecaptchaVerifier,
+    signInWithPhoneNumber,
     type User,
+    type ConfirmationResult,
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
@@ -15,6 +18,7 @@ export interface AuthUser {
     email: string | null;
     displayName: string | null;
     photoURL: string | null;
+    phoneNumber: string | null;
 }
 
 // Convert Firebase User to AuthUser
@@ -23,6 +27,7 @@ const toAuthUser = (user: User): AuthUser => ({
     email: user.email,
     displayName: user.displayName,
     photoURL: user.photoURL,
+    phoneNumber: user.phoneNumber,
 });
 
 // Email/Password Sign Up
@@ -50,6 +55,35 @@ export async function signIn(email: string, password: string): Promise<AuthUser>
 export async function signInWithGoogle(): Promise<AuthUser> {
     const provider = new GoogleAuthProvider();
     const credential = await signInWithPopup(auth, provider);
+    return toAuthUser(credential.user);
+}
+
+// Phone Number Auth - Step 1: Send OTP
+let recaptchaVerifier: RecaptchaVerifier | null = null;
+let confirmationResult: ConfirmationResult | null = null;
+
+export async function sendPhoneOTP(phoneNumber: string, buttonId: string): Promise<void> {
+    // Create reCAPTCHA verifier if not exists
+    if (!recaptchaVerifier) {
+        recaptchaVerifier = new RecaptchaVerifier(auth, buttonId, {
+            size: 'invisible',
+            callback: () => {
+                // reCAPTCHA solved
+            },
+        });
+    }
+
+    confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+}
+
+// Phone Number Auth - Step 2: Verify OTP
+export async function verifyPhoneOTP(code: string): Promise<AuthUser> {
+    if (!confirmationResult) {
+        throw new Error('Please send OTP first');
+    }
+
+    const credential = await confirmationResult.confirm(code);
+    confirmationResult = null;
     return toAuthUser(credential.user);
 }
 
