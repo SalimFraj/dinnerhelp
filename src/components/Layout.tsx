@@ -5,7 +5,7 @@ import {
     ShoppingBasket,
     UtensilsCrossed,
     ShoppingCart,
-    Sparkles,
+    Calendar,
     Mic
 } from 'lucide-react';
 import { useUIStore } from '../stores';
@@ -19,7 +19,7 @@ const navItems = [
     { path: '/pantry', icon: ShoppingBasket, label: 'Pantry' },
     { path: '/recipes', icon: UtensilsCrossed, label: 'Recipes' },
     { path: '/shopping', icon: ShoppingCart, label: 'Shop' },
-    { path: '/chat', icon: Sparkles, label: 'AI' },
+    { path: '/meal-plan', icon: Calendar, label: 'Plan' },
 ];
 
 export default function Layout() {
