@@ -8,7 +8,8 @@ import {
     Trash2,
     Edit2,
     Package,
-    AlertTriangle
+    AlertTriangle,
+    Mic
 } from 'lucide-react';
 import { usePantryStore, useUIStore } from '../stores';
 import type { Ingredient, IngredientCategory } from '../types';
@@ -38,7 +39,7 @@ const categoryOrder: IngredientCategory[] = [
 
 export default function Pantry() {
     const { ingredients, removeIngredient } = usePantryStore();
-    const { addToast } = useUIStore();
+    const { addToast, setVoiceListening } = useUIStore();
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isBarcodeOpen, setIsBarcodeOpen] = useState(false);
@@ -110,6 +111,13 @@ export default function Pantry() {
                 >
                     <Plus size={20} />
                     <span>Add</span>
+                </button>
+                <button
+                    className="add-method-btn"
+                    onClick={() => setVoiceListening(true)}
+                >
+                    <Mic size={20} />
+                    <span>Voice</span>
                 </button>
                 <button
                     className="add-method-btn"

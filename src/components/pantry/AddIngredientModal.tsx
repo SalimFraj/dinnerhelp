@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Plus, Save } from 'lucide-react';
+import { X, Plus, Save, Sparkles } from 'lucide-react';
 import { usePantryStore, useUIStore } from '../../stores';
+import { detectIngredientCategory, suggestUnit } from '../../services/categorizationService';
 import type { Ingredient, IngredientCategory } from '../../types';
 import './AddIngredientModal.css';
 
@@ -10,33 +11,49 @@ interface Props {
     onClose: () => void;
 }
 
-const categories: { value: IngredientCategory; label: string }[] = [
-    { value: 'produce', label: '🥬 Produce' },
-    { value: 'meat', label: '🥩 Meat & Seafood' },
-    { value: 'dairy', label: '🥛 Dairy' },
-    { value: 'grains', label: '🌾 Grains & Bread' },
-    { value: 'canned', label: '🥫 Canned Goods' },
-    { value: 'frozen', label: '❄️ Frozen' },
-    { value: 'spices', label: '🧂 Spices' },
-    { value: 'condiments', label: '🍯 Condiments' },
-    { value: 'beverages', label: '🥤 Beverages' },
-    { value: 'snacks', label: '🍿 Snacks' },
-    { value: 'other', label: '📦 Other' },
-];
+const categoryLabels: Record<IngredientCategory, string> = {
+    produce: '🥬 Produce',
+    meat: '🥩 Meat & Seafood',
+    dairy: '🥛 Dairy',
+    grains: '🌾 Grains & Bread',
+    canned: '🥫 Canned Goods',
+    frozen: '❄️ Frozen',
+    spices: '🧂 Spices',
+    condiments: '🍯 Condiments',
+    beverages: '🥤 Beverages',
+    snacks: '🍿 Snacks',
+    other: '📦 Other',
+};
 
-const commonUnits = ['unit', 'lb', 'oz', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'can', 'bottle', 'bag', 'box'];
+const commonUnits = ['unit', 'lb', 'oz', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'can', 'bottle', 'bag', 'box', 'pcs', 'gal'];
 
 export default function AddIngredientModal({ ingredient, onClose }: Props) {
-    const { addIngredient, updateIngredient } = usePantryStore();
+    const { addIngredientSmart, updateIngredient } = usePantryStore();
     const { addToast } = useUIStore();
 
     const [name, setName] = useState(ingredient?.name || '');
     const [quantity, setQuantity] = useState(ingredient?.quantity?.toString() || '1');
-    const [unit, setUnit] = useState(ingredient?.unit || 'unit');
-    const [category, setCategory] = useState<IngredientCategory>(ingredient?.category || 'other');
+    const [unit, setUnit] = useState(ingredient?.unit || '');
     const [expirationDate, setExpirationDate] = useState(ingredient?.expirationDate || '');
 
+    // Auto-detected category
+    const [detectedCategory, setDetectedCategory] = useState<IngredientCategory>(ingredient?.category || 'other');
+
     const isEditing = !!ingredient;
+
+    // Auto-detect category and suggest unit as user types
+    useEffect(() => {
+        if (name.trim() && !isEditing) {
+            const category = detectIngredientCategory(name);
+            setDetectedCategory(category);
+
+            // Auto-suggest unit if not already set
+            if (!unit || unit === 'unit') {
+                const suggested = suggestUnit(name, category);
+                setUnit(suggested);
+            }
+        }
+    }, [name, isEditing, unit]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -46,19 +63,23 @@ export default function AddIngredientModal({ ingredient, onClose }: Props) {
             return;
         }
 
-        const data = {
-            name: name.trim(),
-            quantity: parseFloat(quantity) || 1,
-            unit,
-            category,
-            expirationDate: expirationDate || undefined,
-        };
-
         if (isEditing) {
-            updateIngredient(ingredient.id, data);
+            updateIngredient(ingredient.id, {
+                name: name.trim(),
+                quantity: parseFloat(quantity) || 1,
+                unit: unit || 'unit',
+                category: detectedCategory,
+                expirationDate: expirationDate || undefined,
+            });
             addToast({ type: 'success', message: `Updated ${name}` });
         } else {
-            addIngredient(data);
+            // Use smart add for new ingredients
+            addIngredientSmart(
+                name.trim(),
+                parseFloat(quantity) || 1,
+                unit || undefined,
+                expirationDate || undefined
+            );
             addToast({ type: 'success', message: `Added ${name} to pantry` });
         }
 
@@ -103,6 +124,15 @@ export default function AddIngredientModal({ ingredient, onClose }: Props) {
                         />
                     </div>
 
+                    {/* Auto-detected Category Badge */}
+                    {name.trim() && (
+                        <div className="detected-category">
+                            <Sparkles size={14} />
+                            <span>Auto-detected: </span>
+                            <span className="category-badge">{categoryLabels[detectedCategory]}</span>
+                        </div>
+                    )}
+
                     {/* Quantity and Unit */}
                     <div className="input-row">
                         <div className="input-group">
@@ -128,20 +158,6 @@ export default function AddIngredientModal({ ingredient, onClose }: Props) {
                                 ))}
                             </select>
                         </div>
-                    </div>
-
-                    {/* Category */}
-                    <div className="input-group">
-                        <label className="input-label">Category</label>
-                        <select
-                            className="input"
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value as IngredientCategory)}
-                        >
-                            {categories.map(cat => (
-                                <option key={cat.value} value={cat.value}>{cat.label}</option>
-                            ))}
-                        </select>
                     </div>
 
                     {/* Expiration Date */}

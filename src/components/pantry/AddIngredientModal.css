@@ -44,3 +44,24 @@
     filter: invert(0.7);
     cursor: pointer;
 }
+
+/* Auto-detected category */
+.detected-category {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.detected-category svg {
+    color: var(--primary-500);
+}
+
+.detected-category .category-badge {
+    color: var(--primary-400);
+    font-weight: 500;
+}
