@@ -6,12 +6,14 @@ interface UIState {
     isVoiceListening: boolean;
     isScannerOpen: boolean;
     isLoading: boolean;
+    initialChatQuery: string;
 
     addToast: (toast: Omit<Toast, 'id'>) => void;
     removeToast: (id: string) => void;
     setVoiceListening: (listening: boolean) => void;
     setScannerOpen: (open: boolean) => void;
     setLoading: (loading: boolean) => void;
+    setInitialChatQuery: (query: string) => void;
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -19,6 +21,7 @@ export const useUIStore = create<UIState>((set) => ({
     isVoiceListening: false,
     isScannerOpen: false,
     isLoading: false,
+    initialChatQuery: '',
 
     addToast: (toast) => {
         const id = crypto.randomUUID();
@@ -52,5 +55,9 @@ export const useUIStore = create<UIState>((set) => ({
 
     setLoading: (loading) => {
         set({ isLoading: loading });
+    },
+
+    setInitialChatQuery: (query) => {
+        set({ initialChatQuery: query });
     },
 }));

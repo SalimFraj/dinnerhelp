@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Mic, X, Loader } from 'lucide-react';
-import { useUIStore, usePantryStore } from '../../stores';
+import { useUIStore, usePantryStore, useShoppingStore } from '../../stores';
 import { useNavigate } from 'react-router-dom';
+import { processVoiceIntent } from '../../services/chatService';
 import './VoiceModal.css';
 
 // Check if speech recognition is supported
@@ -16,108 +17,81 @@ export default function VoiceModal() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [status, setStatus] = useState<'listening' | 'processing' | 'success' | 'error'>('listening');
 
-    const processCommand = useCallback((text: string) => {
-        const lowerText = text.toLowerCase().trim();
+    const processCommand = useCallback(async (text: string) => {
         setIsProcessing(true);
         setStatus('processing');
 
-        // Add ingredient command
-        if (lowerText.startsWith('add ')) {
-            const ingredientText = lowerText.replace('add ', '').trim();
-            if (ingredientText) {
-                // Split by "and", ",", "plus", or "&" to handle multiple ingredients
-                const ingredientParts = ingredientText
-                    .split(/\s*(?:,|\band\b|\bplus\b|&)\s*/i)
-                    .map(s => s.trim())
-                    .filter(s => s.length > 0);
+        try {
+            // Use smart intent processing
+            const intent = await processVoiceIntent(text);
+            console.log('Voice intent:', intent);
 
-                const addedItems: string[] = [];
-
-                ingredientParts.forEach(ingredient => {
-                    // Parse quantity if present (e.g., "2 pounds of chicken")
-                    const quantityMatch = ingredient.match(/^(\d+(?:\.\d+)?)\s*(pounds?|lbs?|oz|ounces?|cups?|tbsp|tsp|kg|g|grams?)?(?:\s+of\s+|\s+)?(.+)/i);
-
-                    if (quantityMatch) {
-                        const [, qty, unit, name] = quantityMatch;
-                        // Use smart add with auto-categorization
-                        addIngredientSmart(name.trim(), parseFloat(qty), unit || undefined);
-                        addedItems.push(name.trim());
+            switch (intent.type) {
+                case 'ADD_PANTRY':
+                    if (intent.items.length > 0) {
+                        intent.items.forEach(item => {
+                            addIngredientSmart(item.name, item.quantity, item.unit);
+                        });
+                        setStatus('success');
+                        const message = intent.items.length > 1
+                            ? `Added ${intent.items.length} items to pantry`
+                            : `Added ${intent.items[0].name} to pantry`;
+                        addToast({ type: 'success', message });
+                        setTimeout(() => setVoiceListening(false), 1500);
                     } else {
-                        // Smart add auto-detects category and unit
-                        addIngredientSmart(ingredient);
-                        addedItems.push(ingredient);
+                        throw new Error('No items identified');
                     }
-                });
+                    break;
 
-                setStatus('success');
-                const message = addedItems.length > 1
-                    ? `Added ${addedItems.length} items: ${addedItems.join(', ')}`
-                    : `Added ${addedItems[0]} to pantry`;
-                addToast({ type: 'success', message });
-                setTimeout(() => setVoiceListening(false), 1500);
-                return;
+                case 'ADD_SHOPPING':
+                    // We need to implement shopping list adding, for now just use pantry smart add with category?
+                    // Or redirect to shopping list? 
+                    // Let's add to shopping store directly if possible, but we need the store
+                    // For now, let's treat as pantry add but maybe with a toast note?
+                    // Actually, let's import shopping store
+                    const { addItem } = useShoppingStore.getState();
+                    const { getActiveList, createList } = useShoppingStore.getState();
+                    let listId = getActiveList()?.id;
+                    if (!listId) listId = createList('Shopping List');
+
+                    intent.items.forEach(item => {
+                        addItem(listId!, {
+                            name: item.name,
+                            quantity: item.quantity || 1,
+                            unit: item.unit || 'unit',
+                            category: 'other', // Could use detection here
+                            checked: false
+                        });
+                    });
+
+                    setStatus('success');
+                    addToast({ type: 'success', message: `Added ${intent.items.length} items to shopping list` });
+                    setTimeout(() => setVoiceListening(false), 1500);
+                    break;
+
+                case 'NAVIGATE':
+                    navigate('/' + intent.page.replace(/^\//, '')); // Ensure / prefix handling
+                    setStatus('success');
+                    setTimeout(() => setVoiceListening(false), 500);
+                    break;
+
+                case 'CHAT':
+                    useUIStore.getState().setInitialChatQuery(intent.query);
+                    navigate('/chat');
+                    setStatus('success');
+                    setTimeout(() => setVoiceListening(false), 500);
+                    break;
             }
+        } catch (error) {
+            console.error('Voice processing error:', error);
+            setStatus('error');
+            addToast({ type: 'warning', message: "Sorry, I couldn't understand that." });
+            setTimeout(() => {
+                setStatus('listening');
+                setIsProcessing(false);
+                setTranscript('');
+            }, 2000);
         }
-
-        // Navigation commands
-        if (lowerText.includes('go to') || lowerText.includes('open') || lowerText.includes('show')) {
-            if (lowerText.includes('pantry')) {
-                navigate('/pantry');
-                setStatus('success');
-                setTimeout(() => setVoiceListening(false), 500);
-                return;
-            }
-            if (lowerText.includes('recipe')) {
-                navigate('/recipes');
-                setStatus('success');
-                setTimeout(() => setVoiceListening(false), 500);
-                return;
-            }
-            if (lowerText.includes('shopping') || lowerText.includes('shop')) {
-                navigate('/shopping');
-                setStatus('success');
-                setTimeout(() => setVoiceListening(false), 500);
-                return;
-            }
-            if (lowerText.includes('plan') || lowerText.includes('calendar')) {
-                navigate('/meal-plan');
-                setStatus('success');
-                setTimeout(() => setVoiceListening(false), 500);
-                return;
-            }
-            if (lowerText.includes('chat') || lowerText.includes('ai')) {
-                navigate('/chat');
-                setStatus('success');
-                setTimeout(() => setVoiceListening(false), 500);
-                return;
-            }
-            if (lowerText.includes('home')) {
-                navigate('/');
-                setStatus('success');
-                setTimeout(() => setVoiceListening(false), 500);
-                return;
-            }
-        }
-
-        // AI Chat commands - redirect to chat page
-        if (lowerText.includes('what can i make') || lowerText.includes('what should i cook') ||
-            lowerText.includes('dinner idea') || lowerText.includes('suggest') ||
-            lowerText.includes('help me cook') || lowerText.includes('ask ai')) {
-            navigate('/chat');
-            setStatus('success');
-            addToast({ type: 'info', message: 'Opening AI Chat...' });
-            setTimeout(() => setVoiceListening(false), 500);
-            return;
-        }
-
-        // Unknown command
-        setStatus('error');
-        addToast({ type: 'warning', message: "Sorry, I didn't understand that command" });
-        setTimeout(() => {
-            setStatus('listening');
-            setIsProcessing(false);
-            setTranscript('');
-        }, 2000);
     }, [addIngredientSmart, addToast, navigate, setVoiceListening]);
 
     useEffect(() => {
