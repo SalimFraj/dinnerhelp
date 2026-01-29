@@ -58,9 +58,9 @@ export interface ShoppingItem {
     category: ShoppingCategory;
     quantity: number;
     unit: string;
-    estimatedPrice?: number;
+    estimatedPrice?: number | null;
     checked: boolean;
-    recipeId?: string;
+    recipeId?: string | null;
 }
 
 export type ShoppingCategory =

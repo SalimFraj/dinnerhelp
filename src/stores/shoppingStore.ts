@@ -101,6 +101,8 @@ export const useShoppingStore = create<ShoppingState>()(
                 const newItem: ShoppingItem = {
                     ...item,
                     id: crypto.randomUUID(),
+                    estimatedPrice: item.estimatedPrice || null as any,
+                    recipeId: item.recipeId || null as any,
                 };
 
                 set((state) => {
