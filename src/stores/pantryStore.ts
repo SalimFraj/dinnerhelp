@@ -34,6 +34,7 @@ export const usePantryStore = create<PantryState>()(
                 const newIngredient: Ingredient = {
                     ...ingredient,
                     category,
+                    expirationDate: ingredient.expirationDate || null,
                     id: crypto.randomUUID(),
                     addedAt: new Date().toISOString(),
                 };
@@ -56,7 +57,7 @@ export const usePantryStore = create<PantryState>()(
                     category,
                     quantity,
                     unit: suggestedUnit,
-                    expirationDate,
+                    expirationDate: expirationDate || null,
                     addedAt: new Date().toISOString(),
                 };
 
