@@ -242,27 +242,31 @@ export default function Auth() {
                     Continue with Google
                 </button>
 
-                {/* Toggle */}
-                <p className="auth-toggle">
-                    {isLogin ? "Don't have an account?" : 'Already have an account?'}
+                {/* Footer Actions */}
+                <div className="auth-footer">
+                    <p className="auth-toggle">
+                        {isLogin ? "Don't have an account?" : 'Already have an account?'}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setIsLogin(!isLogin);
+                                setError('');
+                            }}
+                        >
+                            {isLogin ? 'Sign Up' : 'Sign In'}
+                        </button>
+                    </p>
+
                     <button
-                        type="button"
+                        className="auth-skip-link"
                         onClick={() => {
-                            setIsLogin(!isLogin);
-                            setError('');
+                            localStorage.setItem('dinnerhelp-has-visited', 'true');
+                            navigate('/');
                         }}
                     >
-                        {isLogin ? 'Sign Up' : 'Sign In'}
+                        Continue without account
                     </button>
-                </p>
-
-                {/* Skip */}
-                <button
-                    className="auth-skip"
-                    onClick={() => navigate('/')}
-                >
-                    Continue without account
-                </button>
+                </div>
             </motion.div>
         </div>
     );

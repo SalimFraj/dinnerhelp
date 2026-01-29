@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ShoppingList, ShoppingItem, FavoriteStore } from '../types';
-import { syncShoppingList } from '../services/syncService';
+import { syncShoppingList, syncPantry } from '../services/syncService';
 import { useAuthStore } from './authStore';
 import { usePantryStore } from './pantryStore';
+import { detectShoppingCategory } from '../services/categorizationService';
 
 interface ShoppingState {
     lists: ShoppingList[];
@@ -98,8 +99,14 @@ export const useShoppingStore = create<ShoppingState>()(
             },
 
             addItem: (listId, item) => {
+                // Auto-detect category if not provided or set to other
+                const category = (!item.category || item.category === 'other')
+                    ? detectShoppingCategory(item.name)
+                    : item.category;
+
                 const newItem: ShoppingItem = {
                     ...item,
+                    category,
                     id: crypto.randomUUID(),
                     estimatedPrice: item.estimatedPrice || null as any,
                     recipeId: item.recipeId || null as any,
@@ -256,8 +263,6 @@ export const useShoppingStore = create<ShoppingState>()(
                 const checkedItems = list.items.filter((i) => i.checked);
                 if (checkedItems.length === 0) return;
 
-                // Import pantry store lazily or assume usage via window/importer if circular dep issue
-                // Better: import at top. We will add import at top in next step.
                 // Use imported store
                 const { addIngredientSmart } = usePantryStore.getState();
 
@@ -265,7 +270,16 @@ export const useShoppingStore = create<ShoppingState>()(
                     addIngredientSmart(item.name, item.quantity, item.unit);
                 });
 
+                // Crucial: After adding items to pantry, we need to ensure the PANTRY store syncs immediately
+                // However, addIngredientSmart calls syncPantry internally.
+                // But we ALSO need to clear the shopping list and sync THAT.
                 get().clearCheckedItems(listId);
+
+                // Force manual sync check for pantry if needed (though addIngredientSmart should handle it)
+                const user = useAuthStore.getState().user;
+                if (user) {
+                    syncPantry(user.uid, usePantryStore.getState().ingredients);
+                }
             },
         }),
         {

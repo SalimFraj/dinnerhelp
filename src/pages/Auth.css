@@ -191,9 +191,7 @@
     background: var(--surface-hover);
 }
 
-/* Toggle */
 .auth-toggle {
-    text-align: center;
     font-size: var(--text-sm);
     color: var(--text-muted);
 }
@@ -212,20 +210,30 @@
     color: var(--primary-400);
 }
 
-/* Skip */
-.auth-skip {
-    text-align: center;
+/* Footer Section */
+.auth-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    margin-top: var(--space-2);
+}
+
+.auth-skip-link {
     background: none;
     border: none;
     color: var(--text-muted);
     font-size: var(--text-sm);
+    text-decoration: underline;
+    text-underline-offset: 4px;
     cursor: pointer;
     padding: var(--space-2);
-    transition: color var(--transition-fast);
+    transition: all var(--transition-fast);
 }
 
-.auth-skip:hover {
+.auth-skip-link:hover {
     color: var(--text-secondary);
+    text-decoration-color: var(--primary-500);
 }
 
 /* Back Button */
