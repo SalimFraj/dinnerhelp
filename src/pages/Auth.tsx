@@ -212,7 +212,7 @@ export default function Auth() {
 
                 {/* Divider */}
                 <div className="auth-divider">
-                    <span>or continue with</span>
+                    <span>or</span>
                 </div>
 
                 {/* Google Login */}

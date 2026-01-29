@@ -88,7 +88,33 @@ export const useAuthStore = create<AuthState>()(
                                 console.log('Received cloud update:', data.lastSynced);
 
                                 // Process the updates (same logic as loadFromCloud)
+                                // Process the updates (same logic as loadFromCloud)
                                 if (data.pantry) usePantryStore.setState({ ingredients: data.pantry });
+                                if (data.shoppingLists?.items) {
+                                    const shoppingStore = useShoppingStore.getState();
+                                    let targetListId = shoppingStore.activeListId || shoppingStore.lists[0]?.id;
+
+                                    if (targetListId) {
+                                        useShoppingStore.setState(state => ({
+                                            lists: state.lists.map(l =>
+                                                l.id === targetListId
+                                                    ? { ...l, items: data.shoppingLists.items }
+                                                    : l
+                                            )
+                                        }));
+                                    } else {
+                                        // If no list exists, create one (we can't easily do it inside setState, 
+                                        // but usually loadFromCloud handles initialization)
+                                        const newListId = shoppingStore.createList('My Shopping List');
+                                        useShoppingStore.setState(state => ({
+                                            lists: state.lists.map(l =>
+                                                l.id === newListId
+                                                    ? { ...l, items: data.shoppingLists.items }
+                                                    : l
+                                            )
+                                        }));
+                                    }
+                                }
                                 if (data.mealPlans) useMealPlanStore.setState({ mealPlans: data.mealPlans });
                                 if (data.favorites) useRecipeStore.setState({ favorites: data.favorites });
                                 if (data.recipes) {
@@ -221,8 +247,26 @@ export const useAuthStore = create<AuthState>()(
                         usePantryStore.setState({ ingredients: cloudData.pantry });
                     }
                     if (cloudData.shoppingLists?.items) {
-                        // Note: Cloud shopping items would need special handling for list structure
-                        console.log('Shopping list sync:', cloudData.shoppingLists.items.length, 'items');
+                        // Sync shopping list items
+                        // Since cloud only stores one list currently, we update the active/first list or create one
+                        const shoppingStore = useShoppingStore.getState();
+                        let targetListId = shoppingStore.activeListId;
+
+                        if (!targetListId && shoppingStore.lists.length > 0) {
+                            targetListId = shoppingStore.lists[0].id;
+                        } else if (!targetListId) {
+                            targetListId = shoppingStore.createList('My Shopping List');
+                        }
+
+                        // We can't easily replace the whole list via action, so we might need a direct setter or careful merge
+                        // For now, let's update the items of the target list
+                        useShoppingStore.setState(state => ({
+                            lists: state.lists.map(l =>
+                                l.id === targetListId
+                                    ? { ...l, items: cloudData.shoppingLists.items }
+                                    : l
+                            )
+                        }));
                     }
                     if (cloudData.mealPlans) {
                         useMealPlanStore.setState({ mealPlans: cloudData.mealPlans });
