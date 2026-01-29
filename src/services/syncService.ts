@@ -125,7 +125,9 @@ function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (..
 // Sync specific store data - Debounced individually to avoid conflicts
 // Debounce time: 2 seconds (allows for typing/rapid clicks)
 
+// Sync pantry - debounced
 export const syncPantry = debounce((userId: string, ingredients: Ingredient[]) => {
+    // syncService uses cachedHouseholdId internally to route to correct doc
     saveUserData(userId, { pantry: ingredients }).catch(console.error);
 }, 2000);
 

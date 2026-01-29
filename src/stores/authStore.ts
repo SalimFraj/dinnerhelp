@@ -69,9 +69,13 @@ export const useAuthStore = create<AuthState>()(
                             unsubscribeListener = null;
                         }
 
-                        // Get and cache household ID for sync routing
+                        // Get and cache household ID for sync routing BEFORE loading data
+                        // This ensures we load from the correct collection (Household vs User)
                         const householdId = await getUserHouseholdId(user.uid);
                         setCachedHouseholdId(householdId);
+
+                        // Force a small delay to ensure cache is set? No, await should suffice if setCachedHouseholdId is sync.
+                        // It is sync. So subsequent getDataDocRefSync calls will use it.
 
                         // Load data from cloud when user logs in
                         await get().loadFromCloud();
@@ -227,16 +231,18 @@ export const useAuthStore = create<AuthState>()(
                         useRecipeStore.setState({ favorites: cloudData.favorites });
                     }
                     if (cloudData.recipes) {
-                        // Deduplicate incoming recipes from cloud
+                        // Deduplicate incoming recipes from cloud but PRESERVE existing local recipes (e.g. Discovered ones)
+                        const currentRecipes = useRecipeStore.getState().recipes;
                         const uniqueRecipes = new Map();
-                        // Keep existing local recipes? Or overwrite? 
-                        // Usually local state is truth, but cloud load implies "sync down".
-                        // Let's just ensure we don't add duplicates from the cloud array itself.
+
+                        // 1. Add existing local recipes first (preserving discovery data)
+                        currentRecipes.forEach(r => uniqueRecipes.set(r.id, r));
+
+                        // 2. Merge/Overwrite with Cloud recipes (Custom/Saved ones)
                         cloudData.recipes.forEach(r => uniqueRecipes.set(r.id, r));
 
-                        Array.from(uniqueRecipes.values()).forEach(recipe => {
-                            useRecipeStore.getState().addRecipe(recipe);
-                        });
+                        // 3. Update store
+                        useRecipeStore.setState({ recipes: Array.from(uniqueRecipes.values()) });
                     }
 
                     set({ lastSynced: cloudData.lastSynced || null });
