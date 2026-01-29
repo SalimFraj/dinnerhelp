@@ -80,7 +80,17 @@ export default function Recipes() {
         }
     };
 
-    // Filter and search recipes
+
+
+    // Calculate ingredient matches
+    const getMatchCount = (recipe: Recipe) => {
+        const pantryNames = ingredients.map(i => i.name.toLowerCase());
+        return recipe.ingredients.filter(ri =>
+            pantryNames.some(pn => ri.name.toLowerCase().includes(pn) || pn.includes(ri.name.toLowerCase()))
+        ).length;
+    };
+
+    // Filter, search, and sort recipes
     const filteredRecipes = useMemo(() => {
         let result: Recipe[] = [];
 
@@ -118,16 +128,27 @@ export default function Recipes() {
             );
         }
 
-        return result;
-    }, [recipes, savedRecipes, favorites, activeTab, searchQuery, filters]);
+        // Sort by match count (highest first) for Discover tab
+        if (activeTab === 'discover') {
+            result.sort((a, b) => getMatchCount(b) - getMatchCount(a));
+        }
 
-    // Calculate ingredient matches
-    const getMatchCount = (recipe: Recipe) => {
-        const pantryNames = ingredients.map(i => i.name.toLowerCase());
-        return recipe.ingredients.filter(ri =>
-            pantryNames.some(pn => ri.name.toLowerCase().includes(pn) || pn.includes(ri.name.toLowerCase()))
-        ).length;
+        return result;
+    }, [recipes, savedRecipes, favorites, activeTab, searchQuery, filters, ingredients]);
+
+    // Pagination
+    const [visibleCount, setVisibleCount] = useState(10);
+    const displayedRecipes = filteredRecipes.slice(0, visibleCount);
+    const hasMore = visibleCount < filteredRecipes.length;
+
+    const handleShowMore = () => {
+        setVisibleCount(prev => prev + 10);
     };
+
+    // Reset visible count when filters change
+    useEffect(() => {
+        setVisibleCount(10);
+    }, [activeTab, searchQuery, filters]);
 
     return (
         <div className="page recipes-page">
@@ -214,7 +235,7 @@ export default function Recipes() {
                             </div>
                         </div>
                     ))
-                ) : filteredRecipes.length === 0 ? (
+                ) : displayedRecipes.length === 0 ? (
                     <div className="empty-state">
                         <ChefHat size={64} className="empty-state-icon" />
                         <h3 className="empty-state-title">
@@ -234,27 +255,37 @@ export default function Recipes() {
                         {activeTab === 'discover' && (
                             <button className="btn btn-secondary" onClick={loadRecipes}>
                                 <RefreshCw size={18} />
-                                Refresh
+                                refresh
                             </button>
                         )}
                     </div>
                 ) : (
-                    <AnimatePresence mode="popLayout">
-                        {filteredRecipes.map((recipe, index) => (
-                            <motion.div
-                                key={recipe.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.9 }}
-                                transition={{ delay: index * 0.05 }}
-                            >
-                                <RecipeCard
-                                    recipe={recipe}
-                                    matchCount={getMatchCount(recipe)}
-                                />
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
+                    <>
+                        <AnimatePresence mode="popLayout">
+                            {displayedRecipes.map((recipe, index) => (
+                                <motion.div
+                                    key={recipe.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    transition={{ delay: index * 0.05 }}
+                                >
+                                    <RecipeCard
+                                        recipe={recipe}
+                                        matchCount={getMatchCount(recipe)}
+                                    />
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+
+                        {hasMore && (
+                            <div className="load-more-container">
+                                <button className="btn btn-secondary load-more-btn" onClick={handleShowMore}>
+                                    Show More
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 

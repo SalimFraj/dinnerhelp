@@ -155,3 +155,23 @@
     height: 16px;
     width: 60%;
 }
+
+/* Load More */
+.load-more-container {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    padding: var(--space-4) 0;
+}
+
+.load-more-btn {
+    min-width: 200px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--glass-border);
+}
+
+.load-more-btn:hover {
+    background: var(--bg-elevated);
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+}
