@@ -24,7 +24,7 @@ export default function BarcodeScanner({ onClose }: Props) {
 
     // State
     const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
-    const [isScanning, setIsScanning] = useState(true);
+    // Removed unused isScanning state
     const [isLoading, setIsLoading] = useState(false);
     const [lookupLoading, setLookupLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -69,7 +69,7 @@ export default function BarcodeScanner({ onClose }: Props) {
                 (decodedText) => {
                     handleScanSuccess(decodedText);
                 },
-                (errorMessage) => {
+                (_) => {
                     // Ignore generic parsing errors
                 }
             );
@@ -88,7 +88,7 @@ export default function BarcodeScanner({ onClose }: Props) {
         if (scannerRef.current?.isScanning) {
             await scannerRef.current.pause();
         }
-        setIsScanning(false);
+        // setIsScanning(false); - removed
         setLookupLoading(true);
 
         try {
@@ -131,11 +131,12 @@ export default function BarcodeScanner({ onClose }: Props) {
     useEffect(() => {
         mountedRef.current = true;
         // Small delay to ensure DOM is ready
-        const timeout = setTimeout(() => {
+        const timerId = setTimeout(() => {
             startScanner();
         }, 100);
 
         return () => {
+            clearTimeout(timerId);
             mountedRef.current = false;
             if (scannerRef.current?.isScanning) {
                 scannerRef.current.stop().catch(console.error);
@@ -146,7 +147,7 @@ export default function BarcodeScanner({ onClose }: Props) {
     const handleResume = async () => {
         setScannedProduct(null);
         setError(null);
-        setIsScanning(true);
+        // setIsScanning(true); - removed
         if (scannerRef.current) {
             try {
                 await scannerRef.current.resume();
