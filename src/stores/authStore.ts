@@ -118,7 +118,10 @@ export const useAuthStore = create<AuthState>()(
                                 if (data.mealPlans) useMealPlanStore.setState({ mealPlans: data.mealPlans });
                                 if (data.favorites) useRecipeStore.setState({ favorites: data.favorites });
                                 if (data.recipes) {
-                                    data.recipes.forEach(recipe => useRecipeStore.getState().addRecipe(recipe));
+                                    const recipeStore = useRecipeStore.getState();
+                                    data.recipes.forEach(recipe =>
+                                        recipeStore.addRecipe({ ...recipe, isCustom: true })
+                                    );
                                 }
 
                                 set({ lastSynced: data.lastSynced || null });
