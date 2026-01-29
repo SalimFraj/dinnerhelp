@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Ingredient, IngredientCategory } from '../types';
 import { detectIngredientCategory, suggestUnit } from '../services/categorizationService';
+import { syncPantry } from '../services/syncService';
+import { useAuthStore } from './authStore';
 
 interface PantryState {
     ingredients: Ingredient[];
@@ -35,9 +37,12 @@ export const usePantryStore = create<PantryState>()(
                     id: crypto.randomUUID(),
                     addedAt: new Date().toISOString(),
                 };
-                set((state) => ({
-                    ingredients: [...state.ingredients, newIngredient],
-                }));
+                set((state) => {
+                    const params = { ingredients: [...state.ingredients, newIngredient] };
+                    const user = useAuthStore.getState().user;
+                    if (user) syncPantry(user.uid, params.ingredients);
+                    return params;
+                });
             },
 
             // Smart add - auto-detects category and unit
@@ -55,27 +60,42 @@ export const usePantryStore = create<PantryState>()(
                     addedAt: new Date().toISOString(),
                 };
 
-                set((state) => ({
-                    ingredients: [...state.ingredients, newIngredient],
-                }));
+                set((state) => {
+                    const params = { ingredients: [...state.ingredients, newIngredient] };
+                    const user = useAuthStore.getState().user;
+                    if (user) syncPantry(user.uid, params.ingredients);
+                    return params;
+                });
             },
 
             updateIngredient: (id, updates) => {
-                set((state) => ({
-                    ingredients: state.ingredients.map((ing) =>
-                        ing.id === id ? { ...ing, ...updates } : ing
-                    ),
-                }));
+                set((state) => {
+                    const params = {
+                        ingredients: state.ingredients.map((ing) =>
+                            ing.id === id ? { ...ing, ...updates } : ing
+                        )
+                    };
+                    const user = useAuthStore.getState().user;
+                    if (user) syncPantry(user.uid, params.ingredients);
+                    return params;
+                });
             },
 
             removeIngredient: (id) => {
-                set((state) => ({
-                    ingredients: state.ingredients.filter((ing) => ing.id !== id),
-                }));
+                set((state) => {
+                    const params = {
+                        ingredients: state.ingredients.filter((ing) => ing.id !== id)
+                    };
+                    const user = useAuthStore.getState().user;
+                    if (user) syncPantry(user.uid, params.ingredients);
+                    return params;
+                });
             },
 
             clearPantry: () => {
                 set({ ingredients: [] });
+                const user = useAuthStore.getState().user;
+                if (user) syncPantry(user.uid, []);
             },
 
             getIngredientsByCategory: (category) => {

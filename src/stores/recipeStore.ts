@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Recipe } from '../types';
+import { syncRecipes, syncFavorites } from '../services/syncService';
+import { useAuthStore } from './authStore';
 
 interface RecipeState {
     recipes: Recipe[];
@@ -24,30 +26,69 @@ export const useRecipeStore = create<RecipeState>()(
             addRecipe: (recipe) => {
                 set((state) => {
                     const exists = state.recipes.some((r) => r.id === recipe.id);
+                    let params;
                     if (exists) {
-                        return {
+                        params = {
                             recipes: state.recipes.map((r) =>
                                 r.id === recipe.id ? { ...r, ...recipe } : r
                             ),
                         };
+                    } else {
+                        params = { recipes: [...state.recipes, recipe] };
                     }
-                    return { recipes: [...state.recipes, recipe] };
+
+                    // Sync if it's a custom recipe
+                    if (recipe.isCustom) {
+                        const user = useAuthStore.getState().user;
+                        if (user) {
+                            const customRecipes = params.recipes.filter(r => r.isCustom);
+                            syncRecipes(user.uid, customRecipes);
+                        }
+                    }
+                    return params;
                 });
             },
 
             updateRecipe: (id, updates) => {
-                set((state) => ({
-                    recipes: state.recipes.map((recipe) =>
-                        recipe.id === id ? { ...recipe, ...updates } : recipe
-                    ),
-                }));
+                set((state) => {
+                    const params = {
+                        recipes: state.recipes.map((recipe) =>
+                            recipe.id === id ? { ...recipe, ...updates } : recipe
+                        )
+                    };
+
+                    // Only sync custom recipes
+                    const updatedRecipe = params.recipes.find(r => r.id === id);
+                    if (updatedRecipe?.isCustom) {
+                        const user = useAuthStore.getState().user;
+                        if (user) {
+                            const customRecipes = params.recipes.filter(r => r.isCustom);
+                            syncRecipes(user.uid, customRecipes);
+                        }
+                    }
+                    return params;
+                });
             },
 
             removeRecipe: (id) => {
-                set((state) => ({
-                    recipes: state.recipes.filter((r) => r.id !== id),
-                    favorites: state.favorites.filter((fid) => fid !== id),
-                }));
+                set((state) => {
+                    const recipeToRemove = state.recipes.find(r => r.id === id);
+                    const params = {
+                        recipes: state.recipes.filter((r) => r.id !== id),
+                        favorites: state.favorites.filter((fid) => fid !== id),
+                    };
+
+                    const user = useAuthStore.getState().user;
+                    if (user) {
+                        if (recipeToRemove?.isCustom) {
+                            const customRecipes = params.recipes.filter(r => r.isCustom);
+                            syncRecipes(user.uid, customRecipes);
+                        }
+                        // Also sync favorites removal
+                        syncFavorites(user.uid, params.favorites);
+                    }
+                    return params;
+                });
             },
 
             toggleFavorite: (id) => {
@@ -55,7 +96,7 @@ export const useRecipeStore = create<RecipeState>()(
                     const isFavorite = state.favorites.includes(id);
                     const recipe = state.recipes.find((r) => r.id === id);
 
-                    return {
+                    const params = {
                         favorites: isFavorite
                             ? state.favorites.filter((fid) => fid !== id)
                             : [...state.favorites, id],
@@ -65,6 +106,11 @@ export const useRecipeStore = create<RecipeState>()(
                             )
                             : state.recipes,
                     };
+
+                    const user = useAuthStore.getState().user;
+                    if (user) syncFavorites(user.uid, params.favorites);
+
+                    return params;
                 });
             },
 
@@ -74,6 +120,7 @@ export const useRecipeStore = create<RecipeState>()(
                         recipe.id === id ? { ...recipe, rating } : recipe
                     ),
                 }));
+                // Ratings are local only for now unless custom recipe
             },
 
             getFavorites: () => {

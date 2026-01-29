@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ShoppingList, ShoppingItem, FavoriteStore } from '../types';
+import { syncShoppingList } from '../services/syncService';
+import { useAuthStore } from './authStore';
 
 interface ShoppingState {
     lists: ShoppingList[];
@@ -97,84 +99,126 @@ export const useShoppingStore = create<ShoppingState>()(
                     id: crypto.randomUUID(),
                 };
 
-                set((state) => ({
-                    lists: state.lists.map((list) => {
-                        if (list.id !== listId) return list;
+                set((state) => {
+                    const params = {
+                        lists: state.lists.map((list) => {
+                            if (list.id !== listId) return list;
 
-                        // Check for existing item to aggregate
-                        const existingIndex = list.items.findIndex(
-                            (i) => i.name.toLowerCase() === item.name.toLowerCase() && i.unit === item.unit
-                        );
+                            // Check for existing item to aggregate
+                            const existingIndex = list.items.findIndex(
+                                (i) => i.name.toLowerCase() === item.name.toLowerCase() && i.unit === item.unit
+                            );
 
-                        if (existingIndex >= 0) {
-                            const updated = [...list.items];
-                            updated[existingIndex] = {
-                                ...updated[existingIndex],
-                                quantity: updated[existingIndex].quantity + item.quantity,
-                            };
-                            return { ...list, items: updated };
-                        }
+                            if (existingIndex >= 0) {
+                                const updated = [...list.items];
+                                updated[existingIndex] = {
+                                    ...updated[existingIndex],
+                                    quantity: updated[existingIndex].quantity + item.quantity,
+                                };
+                                return { ...list, items: updated };
+                            }
 
-                        // Add new item and sort by category
-                        const items = [...list.items, newItem].sort(
-                            (a, b) => (categoryOrder[a.category] || 9) - (categoryOrder[b.category] || 9)
-                        );
+                            // Add new item and sort by category
+                            const items = [...list.items, newItem].sort(
+                                (a, b) => (categoryOrder[a.category] || 9) - (categoryOrder[b.category] || 9)
+                            );
 
-                        return { ...list, items };
-                    }),
-                }));
+                            return { ...list, items };
+                        })
+                    }
+
+                    const user = useAuthStore.getState().user;
+                    if (user) {
+                        // Find the updated list and sync its items
+                        const updatedList = params.lists.find(l => l.id === listId);
+                        if (updatedList) syncShoppingList(user.uid, updatedList.items);
+                    }
+                    return params;
+                });
             },
 
             updateItem: (listId, itemId, updates) => {
-                set((state) => ({
-                    lists: state.lists.map((list) => {
-                        if (list.id !== listId) return list;
-                        return {
-                            ...list,
-                            items: list.items.map((item) =>
-                                item.id === itemId ? { ...item, ...updates } : item
-                            ),
-                        };
-                    }),
-                }));
+                set((state) => {
+                    const params = {
+                        lists: state.lists.map((list) => {
+                            if (list.id !== listId) return list;
+                            return {
+                                ...list,
+                                items: list.items.map((item) =>
+                                    item.id === itemId ? { ...item, ...updates } : item
+                                ),
+                            };
+                        })
+                    }
+                    const user = useAuthStore.getState().user;
+                    if (user) {
+                        const updatedList = params.lists.find(l => l.id === listId);
+                        if (updatedList) syncShoppingList(user.uid, updatedList.items);
+                    }
+                    return params;
+                });
             },
 
             removeItem: (listId, itemId) => {
-                set((state) => ({
-                    lists: state.lists.map((list) => {
-                        if (list.id !== listId) return list;
-                        return {
-                            ...list,
-                            items: list.items.filter((item) => item.id !== itemId),
-                        };
-                    }),
-                }));
+                set((state) => {
+                    const params = {
+                        lists: state.lists.map((list) => {
+                            if (list.id !== listId) return list;
+                            return {
+                                ...list,
+                                items: list.items.filter((item) => item.id !== itemId),
+                            };
+                        })
+                    }
+                    const user = useAuthStore.getState().user;
+                    if (user) {
+                        const updatedList = params.lists.find(l => l.id === listId);
+                        if (updatedList) syncShoppingList(user.uid, updatedList.items);
+                    }
+                    return params;
+                });
             },
 
             toggleItemChecked: (listId, itemId) => {
-                set((state) => ({
-                    lists: state.lists.map((list) => {
-                        if (list.id !== listId) return list;
-                        return {
-                            ...list,
-                            items: list.items.map((item) =>
-                                item.id === itemId ? { ...item, checked: !item.checked } : item
-                            ),
-                        };
-                    }),
-                }));
+                set((state) => {
+                    const params = {
+                        lists: state.lists.map((list) => {
+                            if (list.id !== listId) return list;
+                            return {
+                                ...list,
+                                items: list.items.map((item) =>
+                                    item.id === itemId ? { ...item, checked: !item.checked } : item
+                                ),
+                            };
+                        })
+                    }
+                    const user = useAuthStore.getState().user;
+                    if (user) {
+                        const updatedList = params.lists.find(l => l.id === listId);
+                        if (updatedList) syncShoppingList(user.uid, updatedList.items);
+                    }
+                    return params;
+                });
             },
 
             clearCheckedItems: (listId) => {
-                set((state) => ({
-                    lists: state.lists.map((list) => {
-                        if (list.id !== listId) return list;
-                        return {
-                            ...list,
-                            items: list.items.filter((item) => !item.checked),
-                        };
-                    }),
-                }));
+                set((state) => {
+                    const params = {
+                        lists: state.lists.map((list) => {
+                            if (list.id !== listId) return list;
+                            return {
+                                ...list,
+                                items: list.items.filter((item) => !item.checked),
+                            };
+                        })
+                    }
+                    const user = useAuthStore.getState().user;
+                    if (user) {
+                        const updatedList = params.lists.find(l => l.id === listId);
+                        if (updatedList) syncShoppingList(user.uid, updatedList.items);
+                    }
+                    return params;
+                });
             },
 
             addItemsFromRecipe: (listId, items) => {
