@@ -137,17 +137,17 @@ export default function Recipes() {
     }, [recipes, savedRecipes, favorites, activeTab, searchQuery, filters, ingredients]);
 
     // Pagination
-    const [visibleCount, setVisibleCount] = useState(10);
+    const [visibleCount, setVisibleCount] = useState(20);
     const displayedRecipes = filteredRecipes.slice(0, visibleCount);
     const hasMore = visibleCount < filteredRecipes.length;
 
     const handleShowMore = () => {
-        setVisibleCount(prev => prev + 10);
+        setVisibleCount(prev => prev + 20);
     };
 
     // Reset visible count when filters change
     useEffect(() => {
-        setVisibleCount(10);
+        setVisibleCount(20);
     }, [activeTab, searchQuery, filters]);
 
     return (

@@ -3,14 +3,11 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 80px;
+    position: relative;
     padding: 0 !important;
     max-width: 100% !important;
     background: var(--bg-primary);
+    overflow: hidden;
 }
 
 /* Clear Button */
@@ -300,6 +297,7 @@
     background: linear-gradient(to top, var(--bg-primary) 80%, transparent);
     backdrop-filter: blur(10px);
     z-index: 20;
+    margin-top: auto;
 }
 
 .chat-input-wrapper {
