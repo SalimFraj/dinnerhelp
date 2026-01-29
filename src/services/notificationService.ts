@@ -79,7 +79,7 @@ export function showLocalNotification(data: NotificationData): void {
 
 // Schedule expiration notifications (runs client-side)
 export function checkExpiringIngredients(
-    ingredients: { name: string; expirationDate?: string }[]
+    ingredients: { name: string; expirationDate?: string | null }[]
 ): NotificationData[] {
     const notifications: NotificationData[] = [];
     const now = Date.now();

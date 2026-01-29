@@ -77,8 +77,8 @@ export default function AddIngredientModal({ ingredient, onClose }: Props) {
             addIngredientSmart(
                 name.trim(),
                 parseFloat(quantity) || 1,
-                unit || undefined,
-                expirationDate || undefined
+                unit || undefined, // Unit should probably stay string | undefined unless store handles it
+                expirationDate || null as any // Force null for Firestore compatibility if needed, or let store handle it
             );
             addToast({ type: 'success', message: `Added ${name} to pantry` });
         }

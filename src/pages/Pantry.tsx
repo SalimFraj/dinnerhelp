@@ -68,7 +68,7 @@ export default function Pantry() {
         addToast({ type: 'success', message: `Removed ${name}` });
     };
 
-    const isExpiringSoon = (date?: string) => {
+    const isExpiringSoon = (date?: string | null) => {
         if (!date) return false;
         const expDate = new Date(date);
         const today = new Date();
@@ -76,7 +76,7 @@ export default function Pantry() {
         return daysUntil <= 3 && daysUntil >= 0;
     };
 
-    const isExpired = (date?: string) => {
+    const isExpired = (date?: string | null) => {
         if (!date) return false;
         return new Date(date) < new Date();
     };

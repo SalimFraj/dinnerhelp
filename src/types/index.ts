@@ -6,7 +6,7 @@ export interface Ingredient {
     category: IngredientCategory;
     quantity: number;
     unit: string;
-    expirationDate?: string;
+    expirationDate?: string | null;
     addedAt: string;
 }
 
