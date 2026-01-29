@@ -2,12 +2,13 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    height: 100dvh;
+    /* Fit within layout-main, don't force 100dvh which causes overflow */
     position: relative;
     padding: 0 !important;
     max-width: 100% !important;
     background: var(--bg-primary);
     overflow: hidden;
+    /* Prevent page scroll, let chat-messages scroll */
 }
 
 /* Quick Prompts Bar (Pills) */
@@ -337,7 +338,9 @@
     background: linear-gradient(to top, var(--bg-primary) 80%, transparent);
     backdrop-filter: blur(10px);
     z-index: 20;
-    /* No margin-top: auto; let flex layout handle spacing */
+    /* Sticky ensures it stays in view even if layout logic fails slightly */
+    position: sticky;
+    bottom: 0;
     border-top: 1px solid var(--glass-border);
 }
 
