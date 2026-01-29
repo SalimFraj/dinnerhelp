@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { X, Loader, AlertCircle } from 'lucide-react';
+import { X, Loader, AlertCircle, RefreshCw } from 'lucide-react';
 import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
 import { usePantryStore, useUIStore } from '../../stores';
+import { detectIngredientCategory, suggestUnit } from '../../services/categorizationService';
 import './BarcodeScanner.css';
 
 interface Props {
@@ -16,85 +17,112 @@ interface ProductInfo {
 }
 
 export default function BarcodeScanner({ onClose }: Props) {
-    const scannerRef = useRef<HTMLDivElement>(null);
+    const scannerRef = useRef<Html5QrcodeScanner | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [scannedProduct, setScannedProduct] = useState<ProductInfo | null>(null);
     const { addIngredient } = usePantryStore();
     const { addToast } = useUIStore();
+    // const [scannerMounted, setScannerMounted] = useState(false);
 
-    useEffect(() => {
-        let scanner: Html5QrcodeScanner | null = null;
+    const onScanSuccess = useCallback(async (decodedText: string) => {
+        // Stop scanning temporarily
+        if (scannerRef.current) {
+            try {
+                await scannerRef.current.clear();
+                scannerRef.current = null;
+                // setScannerMounted(false);
+            } catch (e) {
+                console.error("Failed to clear scanner", e);
+            }
+        }
 
-        const initScanner = async () => {
-            if (!scannerRef.current) return;
+        setIsLoading(true);
+        setError(null);
 
-            scanner = new Html5QrcodeScanner(
-                'barcode-reader',
-                {
-                    fps: 10,
-                    qrbox: { width: 250, height: 150 },
-                    supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-                    rememberLastUsedCamera: true,
-                },
-                false
+        try {
+            // Look up product in Open Food Facts
+            const response = await fetch(
+                `https://world.openfoodfacts.org/api/v0/product/${decodedText}.json`
             );
+            const data = await response.json();
 
-            scanner.render(onScanSuccess, onScanError);
-        };
+            if (data.status === 1 && data.product) {
+                const product = data.product;
+                setScannedProduct({
+                    name: product.product_name || product.generic_name || 'Unknown Product',
+                    brand: product.brands,
+                    category: product.categories_tags?.[0]?.replace('en:', '') || undefined,
+                });
+            } else {
+                setError(`Product not found (${decodedText}). You can add it manually.`);
+            }
+        } catch (err) {
+            setError('Failed to look up product. Check your connection.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
 
-        const onScanSuccess = async (decodedText: string) => {
-            // Stop scanning
-            scanner?.clear();
-            setIsLoading(true);
-            setError(null);
+    const onScanError = useCallback((_errorMessage: string) => {
+        // Ignore generic ignore errors
+        // console.warn(errorMessage);
+    }, []);
+
+    const startScanner = useCallback(() => {
+        // Wait for DOM
+        setTimeout(() => {
+            if (scannerRef.current) return; // Already running
 
             try {
-                // Look up product in Open Food Facts
-                const response = await fetch(
-                    `https://world.openfoodfacts.org/api/v0/product/${decodedText}.json`
+                const scanner = new Html5QrcodeScanner(
+                    'barcode-reader',
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 150 },
+                        rememberLastUsedCamera: true,
+                        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+                        aspectRatio: 1.0,
+                        showTorchButtonIfSupported: true,
+                    },
+                    false
                 );
-                const data = await response.json();
 
-                if (data.status === 1 && data.product) {
-                    const product = data.product;
-                    setScannedProduct({
-                        name: product.product_name || product.generic_name || 'Unknown Product',
-                        brand: product.brands,
-                        category: product.categories_tags?.[0]?.replace('en:', '') || undefined,
-                    });
-                } else {
-                    setError('Product not found. Try adding manually.');
-                }
-            } catch (err) {
-                setError('Failed to look up product. Check your connection.');
-            } finally {
-                setIsLoading(false);
+                scannerRef.current = scanner;
+                scanner.render(onScanSuccess, onScanError);
+                // setScannerMounted(true);
+            } catch (e) {
+                console.error("Failed to start scanner", e);
+                setError("Camera failed to start. Please check permissions.");
             }
-        };
+        }, 100);
+    }, [onScanSuccess, onScanError]);
 
-        const onScanError = (errorMessage: string) => {
-            // Ignore continuous scan errors
-            if (!errorMessage.includes('NotFoundException')) {
-                console.error('Scan error:', errorMessage);
-            }
-        };
-
-        initScanner();
+    // Initial start
+    useEffect(() => {
+        if (!scannedProduct && !isLoading && !error) {
+            startScanner();
+        }
 
         return () => {
-            scanner?.clear().catch(() => { });
+            if (scannerRef.current) {
+                scannerRef.current.clear().catch(console.error);
+                scannerRef.current = null;
+            }
         };
-    }, []);
+    }, []); // Run once on mount
 
     const handleAddProduct = () => {
         if (!scannedProduct) return;
 
+        const category = detectIngredientCategory(scannedProduct.name);
+        const unit = suggestUnit(scannedProduct.name, category);
+
         addIngredient({
             name: scannedProduct.name,
             quantity: 1,
-            unit: 'unit',
-            category: 'other',
+            unit: unit,
+            category: category,
         });
 
         addToast({ type: 'success', message: `Added ${scannedProduct.name}` });
@@ -104,8 +132,8 @@ export default function BarcodeScanner({ onClose }: Props) {
     const handleScanAgain = () => {
         setScannedProduct(null);
         setError(null);
-        // Re-initialize scanner would go here
-        window.location.reload(); // Simple refresh for now
+        setIsLoading(false);
+        startScanner();
     };
 
     return (
@@ -136,7 +164,7 @@ export default function BarcodeScanner({ onClose }: Props) {
                             <p className="scanner-instruction">
                                 Point your camera at a product barcode
                             </p>
-                            <div id="barcode-reader" ref={scannerRef} className="barcode-reader" />
+                            <div id="barcode-reader" className="barcode-reader" />
                         </>
                     )}
 
@@ -152,6 +180,7 @@ export default function BarcodeScanner({ onClose }: Props) {
                             <AlertCircle size={48} />
                             <p>{error}</p>
                             <button className="btn btn-secondary" onClick={handleScanAgain}>
+                                <RefreshCw size={18} />
                                 Try Again
                             </button>
                         </div>
