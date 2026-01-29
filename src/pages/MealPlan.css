@@ -399,3 +399,23 @@
     font-size: var(--font-size-xs);
     color: var(--text-tertiary);
 }
+
+/* Clickable Recipes */
+.meal-title.clickable {
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.meal-title.clickable:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.cell-meal.clickable {
+    cursor: pointer;
+}
+
+.cell-meal.clickable:hover .cell-meal-title {
+    color: var(--color-primary);
+    text-decoration: underline;
+}

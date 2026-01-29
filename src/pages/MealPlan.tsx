@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
     ChevronLeft,
     ChevronRight,
@@ -23,6 +24,7 @@ const mealTypes: { type: MealType; emoji: string; label: string }[] = [
 ];
 
 export default function MealPlan() {
+    const navigate = useNavigate();
     const { mealPlans, removeMealPlan, addMealPlan } = useMealPlanStore();
     const { ingredients } = usePantryStore();
     const { recipes, addRecipe } = useRecipeStore();
@@ -133,6 +135,10 @@ export default function MealPlan() {
         addToast({ type: 'success', message: `Added ${recipe.title}` });
     };
 
+    const handleRecipeClick = (recipeId: string) => {
+        navigate(`/recipes/${recipeId}`);
+    };
+
     const today = new Date();
 
     return (
@@ -208,7 +214,12 @@ export default function MealPlan() {
                                                 <span className="meal-label">{emoji} {label}</span>
                                                 {meal ? (
                                                     <div className="meal-content">
-                                                        <span className="meal-title">{meal.recipe?.title || 'Recipe'}</span>
+                                                        <span
+                                                            className="meal-title clickable"
+                                                            onClick={() => meal.recipe && handleRecipeClick(meal.recipe.id)}
+                                                        >
+                                                            {meal.recipe?.title || 'Recipe'}
+                                                        </span>
                                                         <button
                                                             className="meal-remove"
                                                             onClick={() => removeMealPlan(meal.id)}
@@ -270,7 +281,10 @@ export default function MealPlan() {
                                         onClick={() => !meal && setShowRecipePicker({ date: dateKey, mealType: type })}
                                     >
                                         {meal ? (
-                                            <div className="cell-meal">
+                                            <div
+                                                className="cell-meal clickable"
+                                                onClick={() => meal.recipe && handleRecipeClick(meal.recipe.id)}
+                                            >
                                                 <span className="cell-meal-title">{meal.recipe?.title}</span>
                                                 <button
                                                     className="cell-remove"
