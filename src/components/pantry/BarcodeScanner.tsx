@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Loader, RefreshCw, Check } from 'lucide-react';
+import { X, Loader, RefreshCw, Check, Zap, ZapOff } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { usePantryStore, useUIStore } from '../../stores';
 import { detectIngredientCategory, suggestUnit } from '../../services/categorizationService';
@@ -24,7 +24,7 @@ export default function BarcodeScanner({ onClose }: Props) {
 
     // State
     const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
-    // Removed unused isScanning state
+    const [isTorchOn, setIsTorchOn] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [lookupLoading, setLookupLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -108,13 +108,15 @@ export default function BarcodeScanner({ onClose }: Props) {
                 });
             } else {
                 setError('Product not found in database.');
+                console.log('Product lookup failed for barcode:', decodedText);
+
                 // Allow manual add logic via toast or state?
                 // For now, let user try again
                 setTimeout(() => {
                     handleResume();
                     setError(null);
-                    addToast({ type: 'error', message: 'Product not found' });
-                }, 2000);
+                    addToast({ type: 'warning', message: `Unknown product (${decodedText}). Try manual search.` });
+                }, 3000);
             }
         } catch (e) {
             setError('Network error. Try again.');
@@ -160,6 +162,36 @@ export default function BarcodeScanner({ onClose }: Props) {
 
     const handleSwitchCamera = () => {
         setFacingMode(prev => prev === 'environment' ? 'user' : 'environment');
+    };
+
+    const handleToggleTorch = async () => {
+        if (!scannerRef.current) return;
+
+        try {
+            // Check capabilities first if needed, but for now try apply directly
+            // const track = scannerRef.current.getRunningTrackCameraCapabilities();
+            // This is a direct video track access if possible, or use library method
+            // Html5Qrcode exposes applyVideoConstraints to the running track
+            // But getting the actual media stream track is tricky via this wrapper
+            // Let's rely on standard constraints update if supported
+
+            // Standard approach: Html5Qrcode doesn't have simple toggleTorch()
+            // We have to inspect the video track from the dom element or use applyVideoConstraints
+
+            // Simpler approach for now:
+            const html5QrCode = scannerRef.current;
+            // @ts-ignore - internal API access or verify support in type defs
+            // If the library version supports it. If not, we might need a workaround.
+            // Documentation says: applyVideoConstraints(constraints) returns Promise
+
+            await html5QrCode.applyVideoConstraints({
+                advanced: [{ torch: !isTorchOn } as any]
+            });
+            setIsTorchOn(!isTorchOn);
+        } catch (err) {
+            console.error('Torch toggle failed', err);
+            addToast({ type: 'error', message: 'Flashlight not supported' });
+        }
     };
 
     const handleAddProduct = () => {
@@ -217,6 +249,14 @@ export default function BarcodeScanner({ onClose }: Props) {
                         {/* Controls - Only show when not viewing a product */}
                         {!scannedProduct && (
                             <div className="scanner-controls">
+                                <button
+                                    className={`camera-switch-btn ${isTorchOn ? 'active' : ''}`}
+                                    onClick={handleToggleTorch}
+                                    title="Toggle Flashlight"
+                                    style={{ marginRight: '1rem', background: isTorchOn ? 'var(--color-primary)' : '' }}
+                                >
+                                    {isTorchOn ? <Zap size={24} fill="currentColor" /> : <ZapOff size={24} />}
+                                </button>
                                 <button
                                     className="camera-switch-btn"
                                     onClick={handleSwitchCamera}

@@ -32,20 +32,35 @@ export interface UserData {
     lastSynced?: string;
 }
 
-// Get the correct document ref (household or user)
+
+
+// Get document ref synchronously (for subscriptions - uses cached value)
+let cachedHouseholdId: string | null | undefined = undefined;
+
+export function setCachedHouseholdId(id: string | null) {
+    cachedHouseholdId = id;
+}
+
+// Unified Get Data Doc Ref - Trusts the cache first
 async function getDataDocRef(userId: string) {
+    // 1. Hot Path: Use cache if we've already resolved the context
+    if (cachedHouseholdId !== undefined) {
+        if (cachedHouseholdId) {
+            return doc(db, COLLECTIONS.householdData, cachedHouseholdId);
+        }
+        return doc(db, COLLECTIONS.userData, userId);
+    }
+
+    // 2. Cold Path: Fetch from DB (Only happens if authStore hasn't initialized us properly)
+    // This should ideally rarely happen if authStore flow is correct
+    console.warn('SyncService: Cold fetch of household ID triggered. This should be rare.');
     const householdId = await getUserHouseholdId(userId);
+    setCachedHouseholdId(householdId); // Cache it for future consistency
+
     if (householdId) {
         return doc(db, COLLECTIONS.householdData, householdId);
     }
     return doc(db, COLLECTIONS.userData, userId);
-}
-
-// Get document ref synchronously (for subscriptions - uses cached value)
-let cachedHouseholdId: string | null = null;
-
-export function setCachedHouseholdId(id: string | null) {
-    cachedHouseholdId = id;
 }
 
 function getDataDocRefSync(userId: string) {
@@ -123,13 +138,14 @@ function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (..
 }
 
 // Sync specific store data - Debounced individually to avoid conflicts
-// Debounce time: 2 seconds (allows for typing/rapid clicks)
+// Debounce time: reduced to 500ms for snappier saves and less data loss risk on reload
+const DEBOUNCE_MS = 500;
 
-// Sync pantry - debounced
 export const syncPantry = debounce((userId: string, ingredients: Ingredient[]) => {
     // syncService uses cachedHouseholdId internally to route to correct doc
-    saveUserData(userId, { pantry: ingredients }).catch(console.error);
-}, 2000);
+    saveUserData(userId, { pantry: ingredients })
+        .catch(err => console.error('SYNC PANTRY FAILED:', err)); // Explicit log
+}, DEBOUNCE_MS);
 
 export const syncShoppingList = debounce((userId: string, items: ShoppingItem[]) => {
     saveUserData(userId, {
@@ -138,16 +154,16 @@ export const syncShoppingList = debounce((userId: string, items: ShoppingItem[])
             lastUpdated: new Date().toISOString(),
         },
     }).catch(console.error);
-}, 2000);
+}, DEBOUNCE_MS);
 
 export const syncMealPlans = debounce((userId: string, mealPlans: MealPlan[]) => {
     saveUserData(userId, { mealPlans }).catch(console.error);
-}, 2000);
+}, DEBOUNCE_MS);
 
 export const syncFavorites = debounce((userId: string, favorites: string[]) => {
     saveUserData(userId, { favorites }).catch(console.error);
-}, 2000);
+}, DEBOUNCE_MS);
 
 export const syncRecipes = debounce((userId: string, recipes: Recipe[]) => {
     saveUserData(userId, { recipes }).catch(console.error);
-}, 2000);
+}, DEBOUNCE_MS);

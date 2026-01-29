@@ -45,7 +45,7 @@ export default function Recipes() {
     const loadRecipes = async () => {
         setIsLoading(true);
         try {
-            const fetched = await fetchRecipes();
+            const fetched = await fetchRecipes(40);
             setRecipes(fetched);
             fetched.forEach(r => addRecipe(r));
         } catch (error) {
