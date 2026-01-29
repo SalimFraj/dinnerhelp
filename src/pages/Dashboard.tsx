@@ -8,13 +8,14 @@ import {
     ArrowRight,
     TrendingUp,
     AlertTriangle,
-    MessageCircle,
+    Clock,
     User,
     LogIn,
     Users
 } from 'lucide-react';
 import { usePantryStore, useRecipeStore, useMealPlanStore } from '../stores';
 import { useAuthStore } from '../stores/authStore';
+import { getExpiryStatus } from '../services/expiryService';
 import './Dashboard.css';
 
 const container = {
@@ -41,14 +42,13 @@ export default function Dashboard() {
     const today = new Date().toISOString().split('T')[0];
     const todaysMeals = mealPlans.filter(p => p.date === today);
 
-    // Get expiring ingredients (within 3 days)
-    const expiringIngredients = ingredients.filter(ing => {
-        if (!ing.expirationDate) return false;
-        const daysUntil = Math.ceil(
-            (new Date(ing.expirationDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-        );
-        return daysUntil <= 3 && daysUntil >= 0;
-    });
+    // Get expiring ingredients using smart service
+    const pantryWithStatus = ingredients
+        .map(ing => ({ ...ing, ...getExpiryStatus(ing) }))
+        .sort((a, b) => a.daysLeft - b.daysLeft);
+
+    const expiringSoon = pantryWithStatus.filter(ing => ing.status !== 'good');
+    const criticalItems = pantryWithStatus.filter(ing => ing.status === 'expired' || ing.status === 'critical');
 
     // Get greeting based on time
     const hour = new Date().getHours();
@@ -108,22 +108,22 @@ export default function Dashboard() {
                     </Link>
                 </motion.section>
 
-                {/* Expiring Ingredients Alert */}
-                {expiringIngredients.length > 0 && (
+                {/* Critical Expiring Alert (Top) */}
+                {criticalItems.length > 0 && (
                     <motion.section variants={item} className="dashboard-section">
                         <div className="expiring-alert">
                             <div className="expiring-header">
                                 <AlertTriangle size={20} className="expiring-icon" />
                                 <span className="expiring-title">
-                                    {expiringIngredients.length} item{expiringIngredients.length > 1 ? 's' : ''} expiring soon
+                                    {criticalItems.length} item{criticalItems.length > 1 ? 's' : ''} expiring soon
                                 </span>
                             </div>
                             <div className="expiring-items">
-                                {expiringIngredients.slice(0, 3).map(ing => (
+                                {criticalItems.slice(0, 3).map(ing => (
                                     <span key={ing.id} className="expiring-item">{ing.name}</span>
                                 ))}
-                                {expiringIngredients.length > 3 && (
-                                    <span className="expiring-more">+{expiringIngredients.length - 3} more</span>
+                                {criticalItems.length > 3 && (
+                                    <span className="expiring-more">+{criticalItems.length - 3} more</span>
                                 )}
                             </div>
                             <Link to="/chat" className="expiring-action">
@@ -241,18 +241,35 @@ export default function Dashboard() {
                     </motion.section>
                 )}
 
-                {/* Tips Card */}
-                <motion.section variants={item} className="dashboard-section">
-                    <div className="tip-card">
-                        <div className="tip-icon">
-                            <MessageCircle size={20} />
+                {/* Smart Freshness Reminders (Replaces Pro Tip) */}
+                {expiringSoon.length > 0 && (
+                    <motion.section variants={item} className="dashboard-section">
+                        <div className="section-header">
+                            <h2 className="section-title">Pantry Freshness</h2>
                         </div>
-                        <div className="tip-content">
-                            <h4>Pro Tip</h4>
-                            <p>Tap the ✨ button to ask AI for dinner ideas based on what you have!</p>
+                        <div className="reminders-card">
+                            <div className="reminders-list">
+                                {expiringSoon.slice(0, 4).map(ing => (
+                                    <div key={ing.id} className="reminder-item">
+                                        <div className="reminder-info">
+                                            <span className="reminder-name">{ing.name}</span>
+                                            {ing.isEstimated && <span className="reminder-badge">Est.</span>}
+                                        </div>
+                                        <div className="reminder-status" style={{ color: ing.color }}>
+                                            <Clock size={14} />
+                                            <span>{ing.label}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            {expiringSoon.length > 4 && (
+                                <div className="reminders-footer">
+                                    +{expiringSoon.length - 4} more items
+                                </div>
+                            )}
                         </div>
-                    </div>
-                </motion.section>
+                    </motion.section>
+                )}
             </motion.div>
         </div>
     );
