@@ -275,18 +275,12 @@ export const useAuthStore = create<AuthState>()(
                         useRecipeStore.setState({ favorites: cloudData.favorites });
                     }
                     if (cloudData.recipes) {
-                        // Deduplicate incoming recipes from cloud but PRESERVE existing local recipes (e.g. Discovered ones)
-                        const currentRecipes = useRecipeStore.getState().recipes;
-                        const uniqueRecipes = new Map();
-
-                        // 1. Add existing local recipes first (preserving discovery data)
-                        currentRecipes.forEach(r => uniqueRecipes.set(r.id, r));
-
-                        // 2. Merge/Overwrite with Cloud recipes (Custom/Saved ones)
-                        cloudData.recipes.forEach(r => uniqueRecipes.set(r.id, r));
-
-                        // 3. Update store
-                        useRecipeStore.setState({ recipes: Array.from(uniqueRecipes.values()) });
+                        // Merge cloud recipes into the store
+                        // We use addRecipe for each to respect the store's merge logic
+                        const recipeStore = useRecipeStore.getState();
+                        cloudData.recipes.forEach(recipe => {
+                            recipeStore.addRecipe({ ...recipe, isCustom: true }); // Ensure they stay custom
+                        });
                     }
 
                     set({ lastSynced: cloudData.lastSynced || null });

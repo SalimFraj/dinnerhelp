@@ -136,10 +136,6 @@ src/
 - **Smooth Animations**: Framer Motion for premium feel
 - **Local Storage**: All data persisted locally for offline access
 
-## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
 
-MIT License - feel free to use this project for personal or commercial use.

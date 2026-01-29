@@ -26,26 +26,26 @@ export const useRecipeStore = create<RecipeState>()(
             addRecipe: (recipe) => {
                 set((state) => {
                     const exists = state.recipes.some((r) => r.id === recipe.id);
-                    let params;
+                    let newRecipes;
+
                     if (exists) {
-                        params = {
-                            recipes: state.recipes.map((r) =>
-                                r.id === recipe.id ? { ...r, ...recipe } : r
-                            ),
-                        };
+                        newRecipes = state.recipes.map((r) =>
+                            r.id === recipe.id ? { ...r, ...recipe } : r
+                        );
                     } else {
-                        params = { recipes: [...state.recipes, recipe] };
+                        newRecipes = [...state.recipes, recipe];
                     }
 
                     // Sync if it's a custom recipe
                     if (recipe.isCustom) {
                         const user = useAuthStore.getState().user;
                         if (user) {
-                            const customRecipes = params.recipes.filter(r => r.isCustom);
+                            const customRecipes = newRecipes.filter(r => r.isCustom);
                             syncRecipes(user.uid, customRecipes);
                         }
                     }
-                    return params;
+
+                    return { recipes: newRecipes };
                 });
             },
 

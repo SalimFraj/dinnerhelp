@@ -22,7 +22,6 @@ export default function Recipes() {
     const { addRecipe, favorites, recipes: savedRecipes } = useRecipeStore();
     const { addToast } = useUIStore();
 
-    const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isAILoading, setIsAILoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -37,16 +36,19 @@ export default function Recipes() {
         maxServings: 10,
     });
 
-    // Load recipes on mount
+    // Load recipes on mount if store is empty
     useEffect(() => {
-        loadRecipes();
+        const discoverRecipes = savedRecipes.filter(r => !r.isCustom && r.source !== 'ai');
+        if (discoverRecipes.length === 0) {
+            loadRecipes();
+        }
     }, []);
 
     const loadRecipes = async () => {
         setIsLoading(true);
         try {
             const fetched = await fetchRecipes(40);
-            setRecipes(fetched);
+            // Add all to store, they will persist
             fetched.forEach(r => addRecipe(r));
         } catch (error) {
             addToast({ type: 'error', message: 'Failed to load recipes' });
@@ -71,7 +73,6 @@ export default function Recipes() {
                 addRecipe(recipe);
             });
 
-            setRecipes(prev => [...suggestions, ...prev]);
             addToast({ type: 'success', message: `Generated ${suggestions.length} recipe suggestions!` });
         } catch (error) {
             addToast({ type: 'error', message: 'AI suggestions require setup. Check your API key.' });
@@ -79,8 +80,6 @@ export default function Recipes() {
             setIsAILoading(false);
         }
     };
-
-
 
     // Calculate ingredient matches
     const getMatchCount = (recipe: Recipe) => {
@@ -102,7 +101,9 @@ export default function Recipes() {
                 result = savedRecipes.filter(r => r.isCustom);
                 break;
             default:
-                result = recipes;
+                // Discover: Show everything that isn't custom, or just everything sorted by match count
+                // Usually discover is for non-custom recipes
+                result = savedRecipes.filter(r => !r.isCustom);
         }
 
         // Apply search
@@ -134,7 +135,7 @@ export default function Recipes() {
         }
 
         return result;
-    }, [recipes, savedRecipes, favorites, activeTab, searchQuery, filters, ingredients]);
+    }, [savedRecipes, favorites, activeTab, searchQuery, filters, ingredients]);
 
     // Pagination
     const [visibleCount, setVisibleCount] = useState(20);
