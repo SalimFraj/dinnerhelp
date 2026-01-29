@@ -4,6 +4,7 @@ import { Mic, X, Loader } from 'lucide-react';
 import { useUIStore, usePantryStore, useShoppingStore } from '../../stores';
 import { useNavigate } from 'react-router-dom';
 import { processVoiceIntent } from '../../services/chatService';
+import { detectShoppingCategory, suggestUnit } from '../../services/categorizationService';
 import './VoiceModal.css';
 
 // Check if speech recognition is supported
@@ -55,11 +56,14 @@ export default function VoiceModal() {
                     if (!listId) listId = createList('Shopping List');
 
                     intent.items.forEach(item => {
+                        const category = detectShoppingCategory(item.name);
+                        const unit = item.unit || suggestUnit(item.name);
+
                         addItem(listId!, {
                             name: item.name,
                             quantity: item.quantity || 1,
-                            unit: item.unit || 'unit',
-                            category: 'other', // Could use detection here
+                            unit: unit,
+                            category: category,
                             checked: false
                         });
                     });
