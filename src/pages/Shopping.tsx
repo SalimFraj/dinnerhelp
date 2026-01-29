@@ -39,7 +39,8 @@ export default function Shopping() {
         removeItem,
         clearCheckedItems,
         addItem,
-        getActiveList
+        getActiveList,
+        moveCheckedToPantry
     } = useShoppingStore();
     const { addToast } = useUIStore();
 
@@ -180,13 +181,26 @@ export default function Shopping() {
                         Copy List
                     </button>
                     {stats.checked > 0 && (
-                        <button
-                            className="btn btn-ghost"
-                            onClick={handleClearChecked}
-                        >
-                            <Trash2 size={18} />
-                            Clear Done
-                        </button>
+                        <>
+                            <button
+                                className="btn btn-primary"
+                                onClick={() => {
+                                    moveCheckedToPantry(activeListId!);
+                                    addToast({ type: 'success', message: 'Moved items to Pantry!' });
+                                }}
+                                style={{ background: 'var(--color-success)', borderColor: 'var(--color-success)' }}
+                            >
+                                <Check size={18} />
+                                Done Shopping
+                            </button>
+                            <button
+                                className="btn btn-ghost"
+                                onClick={handleClearChecked}
+                            >
+                                <Trash2 size={18} />
+                                Clear Done
+                            </button>
+                        </>
                     )}
                 </div>
             )}

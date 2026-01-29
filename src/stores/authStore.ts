@@ -227,8 +227,14 @@ export const useAuthStore = create<AuthState>()(
                         useRecipeStore.setState({ favorites: cloudData.favorites });
                     }
                     if (cloudData.recipes) {
-                        // Add or update recipes in local store
-                        cloudData.recipes.forEach(recipe => {
+                        // Deduplicate incoming recipes from cloud
+                        const uniqueRecipes = new Map();
+                        // Keep existing local recipes? Or overwrite? 
+                        // Usually local state is truth, but cloud load implies "sync down".
+                        // Let's just ensure we don't add duplicates from the cloud array itself.
+                        cloudData.recipes.forEach(r => uniqueRecipes.set(r.id, r));
+
+                        Array.from(uniqueRecipes.values()).forEach(recipe => {
                             useRecipeStore.getState().addRecipe(recipe);
                         });
                     }

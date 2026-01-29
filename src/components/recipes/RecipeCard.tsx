@@ -17,7 +17,7 @@ export default function RecipeCard({ recipe, matchCount = 0 }: Props) {
     const handleFavorite = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleFavorite(recipe.id);
+        toggleFavorite(recipe.id, recipe);
     };
 
 

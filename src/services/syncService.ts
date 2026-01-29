@@ -113,28 +113,39 @@ export function subscribeToUserData(
     );
 }
 
-// Sync specific store data
-export async function syncPantry(userId: string, ingredients: Ingredient[]): Promise<void> {
-    await saveUserData(userId, { pantry: ingredients });
+// Debounce utility to prevent write spam
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): (...args: Parameters<T>) => void {
+    let timeout: ReturnType<typeof setTimeout>;
+    return (...args: Parameters<T>) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+    };
 }
 
-export async function syncShoppingList(userId: string, items: ShoppingItem[]): Promise<void> {
-    await saveUserData(userId, {
+// Sync specific store data - Debounced individually to avoid conflicts
+// Debounce time: 2 seconds (allows for typing/rapid clicks)
+
+export const syncPantry = debounce((userId: string, ingredients: Ingredient[]) => {
+    saveUserData(userId, { pantry: ingredients }).catch(console.error);
+}, 2000);
+
+export const syncShoppingList = debounce((userId: string, items: ShoppingItem[]) => {
+    saveUserData(userId, {
         shoppingLists: {
             items,
             lastUpdated: new Date().toISOString(),
         },
-    });
-}
+    }).catch(console.error);
+}, 2000);
 
-export async function syncMealPlans(userId: string, mealPlans: MealPlan[]): Promise<void> {
-    await saveUserData(userId, { mealPlans });
-}
+export const syncMealPlans = debounce((userId: string, mealPlans: MealPlan[]) => {
+    saveUserData(userId, { mealPlans }).catch(console.error);
+}, 2000);
 
-export async function syncFavorites(userId: string, favorites: string[]): Promise<void> {
-    await saveUserData(userId, { favorites });
-}
+export const syncFavorites = debounce((userId: string, favorites: string[]) => {
+    saveUserData(userId, { favorites }).catch(console.error);
+}, 2000);
 
-export async function syncRecipes(userId: string, recipes: Recipe[]): Promise<void> {
-    await saveUserData(userId, { recipes });
-}
+export const syncRecipes = debounce((userId: string, recipes: Recipe[]) => {
+    saveUserData(userId, { recipes }).catch(console.error);
+}, 2000);

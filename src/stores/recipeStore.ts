@@ -10,7 +10,7 @@ interface RecipeState {
     addRecipe: (recipe: Recipe) => void;
     updateRecipe: (id: string, updates: Partial<Recipe>) => void;
     removeRecipe: (id: string) => void;
-    toggleFavorite: (id: string) => void;
+    toggleFavorite: (id: string, recipe?: Recipe) => void;
     rateRecipe: (id: string, rating: number) => void;
     getFavorites: () => Recipe[];
     getCustomRecipes: () => Recipe[];
@@ -91,24 +91,43 @@ export const useRecipeStore = create<RecipeState>()(
                 });
             },
 
-            toggleFavorite: (id) => {
+            toggleFavorite: (id, recipeObject) => {
                 set((state) => {
                     const isFavorite = state.favorites.includes(id);
-                    const recipe = state.recipes.find((r) => r.id === id);
+                    let currentRecipes = state.recipes;
+
+                    // If we are favoriting and have the object, ensure it's in the store
+                    if (!isFavorite && recipeObject) {
+                        const exists = currentRecipes.some(r => r.id === id);
+                        if (!exists) {
+                            currentRecipes = [...currentRecipes, recipeObject];
+                        }
+                    }
 
                     const params = {
                         favorites: isFavorite
                             ? state.favorites.filter((fid) => fid !== id)
                             : [...state.favorites, id],
-                        recipes: recipe
-                            ? state.recipes.map((r) =>
-                                r.id === id ? { ...r, isFavorite: !isFavorite } : r
-                            )
-                            : state.recipes,
+                        recipes: currentRecipes.map((r) =>
+                            r.id === id ? { ...r, isFavorite: !isFavorite } : r
+                        ),
                     };
 
                     const user = useAuthStore.getState().user;
-                    if (user) syncFavorites(user.uid, params.favorites);
+                    if (user) {
+                        syncFavorites(user.uid, params.favorites);
+                        // If we added a new recipe (not custom), we probably don't need to sync it to 'recipes' collection 
+                        // unless we want it to be a "custom" recipe. 
+                        // But for now, local persistence is handled by persist middleware.
+                        // However, if we want it to persist across devices, we rely on the fact that
+                        // we generally only sync 'custom' recipes.
+                        // If we want favorited API recipes to persist across devices, we need to fetch them by ID or store them?
+                        // The current architecture seems to sync 'favorites' as a list of IDs.
+                        // Clients need to be able to fetch those IDs. 
+                        // Since they are external IDs, we might need to fetch them again?
+                        // OR we should save them as custom recipes?
+                        // Let's just update local state for now to fix the UI issue.
+                    }
 
                     return params;
                 });

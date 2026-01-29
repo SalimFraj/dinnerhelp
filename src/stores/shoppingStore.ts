@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { ShoppingList, ShoppingItem, FavoriteStore } from '../types';
 import { syncShoppingList } from '../services/syncService';
 import { useAuthStore } from './authStore';
+import { usePantryStore } from './pantryStore';
 
 interface ShoppingState {
     lists: ShoppingList[];
@@ -28,6 +29,9 @@ interface ShoppingState {
     // Store management
     addFavoriteStore: (store: Omit<FavoriteStore, 'id'>) => void;
     removeFavoriteStore: (id: string) => void;
+
+    // Actions
+    moveCheckedToPantry: (listId: string) => void;
 }
 
 // Category mapping for smart organization
@@ -240,6 +244,26 @@ export const useShoppingStore = create<ShoppingState>()(
                 set((state) => ({
                     favoriteStores: state.favoriteStores.filter((s) => s.id !== id),
                 }));
+            },
+
+            moveCheckedToPantry: (listId) => {
+                const state = get();
+                const list = state.lists.find((l) => l.id === listId);
+                if (!list) return;
+
+                const checkedItems = list.items.filter((i) => i.checked);
+                if (checkedItems.length === 0) return;
+
+                // Import pantry store lazily or assume usage via window/importer if circular dep issue
+                // Better: import at top. We will add import at top in next step.
+                // Use imported store
+                const { addIngredientSmart } = usePantryStore.getState();
+
+                checkedItems.forEach((item) => {
+                    addIngredientSmart(item.name, item.quantity, item.unit);
+                });
+
+                get().clearCheckedItems(listId);
             },
         }),
         {

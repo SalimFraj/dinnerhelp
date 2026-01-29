@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -140,6 +140,18 @@ export default function MealPlan() {
     };
 
     const today = new Date();
+
+    // Auto-scroll to today
+    useEffect(() => {
+        // Short timeout to ensure rendering
+        const timeout = setTimeout(() => {
+            const todayElement = document.querySelector('.day-card.today') || document.querySelector('.header-cell.today');
+            if (todayElement) {
+                todayElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            }
+        }, 500);
+        return () => clearTimeout(timeout);
+    }, [viewMode, currentWeekStart]);
 
     return (
         <div className="page meal-plan-page">
