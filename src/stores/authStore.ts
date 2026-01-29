@@ -41,8 +41,12 @@ interface AuthState {
     logout: () => Promise<void>;
     syncToCloud: () => Promise<void>;
     loadFromCloud: () => Promise<void>;
+    refreshSync: () => Promise<void>;
     setSyncEnabled: (enabled: boolean) => void;
 }
+
+// Keep track of unsubscribe function outside of store to avoid serialization issues
+let unsubscribeListener: (() => void) | null = null;
 
 export const useAuthStore = create<AuthState>()(
     persist(
@@ -59,6 +63,12 @@ export const useAuthStore = create<AuthState>()(
                     set({ user, isInitialized: true });
 
                     if (user && get().syncEnabled) {
+                        // Clear any existing listener
+                        if (unsubscribeListener) {
+                            unsubscribeListener();
+                            unsubscribeListener = null;
+                        }
+
                         // Get and cache household ID for sync routing
                         const householdId = await getUserHouseholdId(user.uid);
                         setCachedHouseholdId(householdId);
@@ -66,16 +76,30 @@ export const useAuthStore = create<AuthState>()(
                         // Load data from cloud when user logs in
                         await get().loadFromCloud();
 
-                        // Subscribe to real-time updates
-                        subscribeToUserData(user.uid, (data) => {
+                        // Subscribe to real-time updates and save listener
+                        unsubscribeListener = subscribeToUserData(user.uid, (data) => {
                             if (data) {
                                 // Update local stores with cloud data
                                 // This enables real-time sync across devices
                                 console.log('Received cloud update:', data.lastSynced);
+
+                                // Process the updates (same logic as loadFromCloud)
+                                if (data.pantry) usePantryStore.setState({ ingredients: data.pantry });
+                                if (data.mealPlans) useMealPlanStore.setState({ mealPlans: data.mealPlans });
+                                if (data.favorites) useRecipeStore.setState({ favorites: data.favorites });
+                                if (data.recipes) {
+                                    data.recipes.forEach(recipe => useRecipeStore.getState().addRecipe(recipe));
+                                }
+
+                                set({ lastSynced: data.lastSynced || null });
                             }
                         });
                     } else {
                         setCachedHouseholdId(null);
+                        if (unsubscribeListener) {
+                            unsubscribeListener();
+                            unsubscribeListener = null;
+                        }
                     }
                 });
             },
@@ -212,6 +236,45 @@ export const useAuthStore = create<AuthState>()(
                     set({ lastSynced: cloudData.lastSynced || null });
                 } catch (error) {
                     console.error('Load from cloud failed:', error);
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
+
+            refreshSync: async () => {
+                const { user, syncEnabled } = get();
+                if (!user || !syncEnabled) return;
+
+                // 1. Unsubscribe existing listener
+                if (unsubscribeListener) {
+                    unsubscribeListener();
+                    unsubscribeListener = null;
+                }
+
+                set({ isLoading: true });
+                try {
+                    // 2. Refresh cached household ID
+                    const householdId = await getUserHouseholdId(user.uid);
+                    setCachedHouseholdId(householdId);
+
+                    // 3. Load fresh data
+                    await get().loadFromCloud();
+
+                    // 4. Setup new subscription
+                    unsubscribeListener = subscribeToUserData(user.uid, (data) => {
+                        if (data) {
+                            // Update local stores
+                            if (data.pantry) usePantryStore.setState({ ingredients: data.pantry });
+                            if (data.mealPlans) useMealPlanStore.setState({ mealPlans: data.mealPlans });
+                            if (data.favorites) useRecipeStore.setState({ favorites: data.favorites });
+                            if (data.recipes) {
+                                data.recipes.forEach(recipe => useRecipeStore.getState().addRecipe(recipe));
+                            }
+                            set({ lastSynced: data.lastSynced || null });
+                        }
+                    });
+                } catch (error) {
+                    console.error('Refresh sync failed:', error);
                 } finally {
                     set({ isLoading: false });
                 }

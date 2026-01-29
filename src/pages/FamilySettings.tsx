@@ -76,6 +76,7 @@ export default function FamilySettings() {
             const h = await createHousehold(user.uid, householdName.trim());
             setHousehold(h);
             addToast({ type: 'success', message: 'Household created!' });
+            await useAuthStore.getState().refreshSync();
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to create household';
             setError(message);
@@ -95,6 +96,7 @@ export default function FamilySettings() {
             setHousehold(h);
             addToast({ type: 'success', message: 'Joined household!' });
             setShowJoinForm(false);
+            await useAuthStore.getState().refreshSync();
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to join household';
             setError(message);
@@ -117,6 +119,7 @@ export default function FamilySettings() {
             await leaveHousehold(user.uid, household.id);
             setHousehold(null);
             addToast({ type: 'success', message: 'Left household' });
+            await useAuthStore.getState().refreshSync();
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to leave household';
             addToast({ type: 'error', message });

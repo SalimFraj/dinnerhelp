@@ -58,49 +58,58 @@ export default function ReceiptScanner({ onClose }: Props) {
         }
     }, [addToast]);
 
-    // Simple receipt parser - extracts likely grocery items
+    // Improved receipt parser
     const parseReceiptText = (text: string): string[] => {
         const lines = text.split('\n');
         const items: string[] = [];
 
-        // Common patterns to exclude (prices, totals, store info)
-        const excludePatterns = [
-            /^\$?\d+\.?\d*$/,           // Just numbers/prices
-            /total/i,                   // Totals
-            /subtotal/i,
-            /tax/i,
-            /change/i,
-            /card/i,
-            /visa|mastercard|amex/i,
-            /thank you/i,
-            /welcome/i,
-            /^\d{1,2}\/\d{1,2}/,        // Dates
-            /^\d{1,2}:\d{2}/,           // Times
-            /^x\d+/i,                   // Quantity markers
-            /^\s*$/,                    // Empty lines
+        // Stopwords to exclude (non-food common receipt text)
+        const stopWords = [
+            'total', 'subtotal', 'tax', 'change', 'cash', 'credit', 'debit', 'visa', 'mastercard',
+            'amex', 'discover', 'auth', 'ref', 'chk', 'term', 'date', 'time', 'lb', 'oz', 'kg',
+            'qty', 'price', 'amount', 'item', 'customer', 'copy', 'store', 'phone', 'tel', 'fax',
+            'manager', 'thank', 'you', 'visit', 'again', 'welcome', 'save', 'coupon', 'card',
+            'net', 'wt', 'balance', 'due', 'tender', 'change', 'member', 'rewards', 'savings',
+            'discount', 'sale', 'regular', 'gallons', 'fuel', 'points'
         ];
 
         lines.forEach(line => {
-            // Clean the line
-            let cleaned = line.trim()
-                .replace(/\$[\d.]+/g, '')      // Remove prices
-                .replace(/\d+\.\d{2}/g, '')    // Remove decimal numbers
-                .replace(/[^\w\s'-]/g, '')     // Remove special chars
-                .trim();
+            // 1. Basic cleanup
+            let cleaned = line.trim();
+            if (!cleaned) return;
 
-            // Skip if too short or matches exclude patterns
-            if (cleaned.length < 3) return;
-            if (excludePatterns.some(p => p.test(cleaned))) return;
+            // 2. Remove price columns (often at the end of the line)
+            // e.g. "BANANAS 0.59 T" -> "BANANAS"
+            cleaned = cleaned.replace(/(\$?\s*\d+\.\d{2}\s*[A-Z]?)$/i, '');
 
-            // Skip if it's mostly numbers
-            if (cleaned.replace(/\d/g, '').length < cleaned.length / 2) return;
+            // 3. Remove leading/trailing numbers/codes
+            // e.g. "4011 BANANAS" -> "BANANAS"
+            cleaned = cleaned.replace(/^\d+\s+/, '').replace(/\s+\d+$/, '');
 
-            if (cleaned) {
-                items.push(cleaned.toLowerCase());
+            // 4. Remove purely numeric parts and single distinct characters
+            cleaned = cleaned.replace(/\b\d+\b/g, '')  // Remove isolated numbers
+                .replace(/\b[A-Z]\b/g, '') // Remove single letters (tax codes etc)
+                .replace(/[^\w\s'-]/g, ''); // Remove special chars but keep ' and -
+
+            // 5. Trim again and lowercase
+            cleaned = cleaned.trim().toLowerCase();
+
+            // 6. Filtering checks
+            if (cleaned.length < 3) return; // Too short
+            if (stopWords.some(word => cleaned.includes(word))) return; // Contains stopword
+            if (/^\d+$/.test(cleaned.replace(/\s/g, ''))) return; // Only numbers remaining
+
+            // 7. Capitalize first letter of each word for display
+            const niceName = cleaned.split(' ')
+                .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(' ');
+
+            if (niceName) {
+                items.push(niceName);
             }
         });
 
-        // Remove duplicates and return
+        // Remove duplicates and return top 20
         return [...new Set(items)].slice(0, 20);
     };
 
