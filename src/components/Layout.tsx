@@ -30,14 +30,14 @@ export default function Layout() {
 
     return (
         <div className="layout">
-            <main className="layout-main">
+            <main className={`layout-main ${isOnChatPage ? 'chat-mode' : ''}`}>
                 <motion.div
                     key={location.pathname}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
-                    style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+                    className="layout-content"
                 >
                     <Outlet />
                 </motion.div>

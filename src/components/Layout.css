@@ -14,6 +14,18 @@
     overflow-x: hidden;
 }
 
+.layout-main.chat-mode {
+    overflow: hidden;
+    height: calc(100dvh - 72px);
+    /* Subtract navbar height */
+}
+
+.layout-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
 /* Voice FAB */
 .voice-fab {
     position: fixed;

@@ -8,7 +8,6 @@ import {
     Sparkles,
     ChefHat,
     Loader,
-    AlertCircle
 } from 'lucide-react';
 import { useChatStore } from '../stores/chatStore';
 import { usePantryStore, useUIStore } from '../stores';
@@ -188,34 +187,32 @@ export default function Chat() {
             <div className="chat-messages">
                 {messages.length === 0 ? (
                     <div className="chat-empty">
-                        <div className="chat-empty-icon">
-                            <ChefHat size={64} />
-                        </div>
-                        <h2>What's for dinner?</h2>
+                        <motion.div
+                            className="chat-empty-icon"
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ type: "spring", damping: 12 }}
+                        >
+                            <ChefHat size={40} />
+                        </motion.div>
+                        <h2>Hungry?</h2>
                         <p>
-                            I know everything about your pantry and can help you decide
-                            what to cook. Ask me anything!
+                            I'm your personal Kitchen AI. I can suggest recipes based on your pantry,
+                            help with substitutions, or plan your next meal.
                         </p>
 
-                        {ingredients.length === 0 && (
-                            <div className="chat-warning">
-                                <AlertCircle size={16} />
-                                <span>Add ingredients to your pantry for personalized suggestions</span>
-                            </div>
-                        )}
-
                         <div className="quick-prompts">
-                            {quickPrompts.map((prompt, index) => (
+                            {quickPrompts.slice(0, 4).map((prompt, index) => (
                                 <motion.button
                                     key={index}
-                                    className="quick-prompt"
+                                    className="quick-prompt-pill"
                                     onClick={() => handleSend(prompt.prompt)}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.05 }}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.2 + index * 0.05 }}
                                     disabled={isLoading}
                                 >
-                                    <span className="quick-prompt-emoji">{prompt.emoji}</span>
+                                    <span>{prompt.emoji}</span>
                                     <span>{prompt.text}</span>
                                 </motion.button>
                             ))}
@@ -227,16 +224,19 @@ export default function Chat() {
                             <motion.div
                                 key={message.id}
                                 className={`chat-message ${message.role}`}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0 }}
+                                initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                transition={{ duration: 0.3, ease: "easeOut" }}
                             >
                                 {message.role === 'assistant' && (
                                     <div className="message-avatar">
-                                        <Sparkles size={16} />
+                                        <Sparkles size={14} />
                                     </div>
                                 )}
                                 <div className="message-content">
+                                    {message.role === 'assistant' && (
+                                        <div className="persona-label">Kitchen AI</div>
+                                    )}
                                     {formatMessage(message.content)}
                                 </div>
                             </motion.div>
