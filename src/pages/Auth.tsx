@@ -67,7 +67,7 @@ export default function Auth() {
                     </button>
 
                     <button
-                        className="auth-skip"
+                        className="auth-signout-btn"
                         onClick={async () => {
                             await useAuthStore.getState().logout();
                             addToast({ type: 'success', message: 'Signed out' });

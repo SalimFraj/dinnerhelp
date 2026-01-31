@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search,
@@ -26,7 +27,10 @@ export default function Recipes() {
     const [isAILoading, setIsAILoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [showFilters, setShowFilters] = useState(false);
-    const [activeTab, setActiveTab] = useState<'discover' | 'favorites' | 'custom'>('discover');
+    const location = useLocation();
+    const [activeTab, setActiveTab] = useState<'discover' | 'favorites' | 'custom'>(
+        (location.state as any)?.activeTab || 'discover'
+    );
 
     // Filters
     const [filters, setFilters] = useState({

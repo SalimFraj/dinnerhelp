@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { X, Plus, Save, Sparkles } from 'lucide-react';
 import { usePantryStore, useUIStore } from '../../stores';
 import { actionService } from '../../services/actionService';
-import { detectIngredientCategory, suggestUnit } from '../../services/categorizationService';
+import { detectIngredientCategory, suggestUnit, getUnitsForCategory } from '../../services/categorizationService';
 import type { Ingredient, IngredientCategory } from '../../types';
 import './AddIngredientModal.css';
 
@@ -154,7 +154,10 @@ export default function AddIngredientModal({ ingredient, onClose }: Props) {
                                 value={unit}
                                 onChange={(e) => setUnit(e.target.value)}
                             >
-                                {commonUnits.map(u => (
+                                {((detectedCategory && name.trim())
+                                    ? getUnitsForCategory(detectedCategory)
+                                    : commonUnits
+                                ).map(u => (
                                     <option key={u} value={u}>{u}</option>
                                 ))}
                             </select>

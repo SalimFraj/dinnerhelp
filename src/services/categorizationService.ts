@@ -471,33 +471,60 @@ export function suggestUnit(name: string, category?: IngredientCategory): string
     const normalized = name.toLowerCase();
 
     // Specific items with known units
-    if (normalized.includes('egg')) return 'pcs';
-    if (normalized.includes('banana') || normalized.includes('apple') || normalized.includes('orange')) return 'pcs';
-    if (normalized.includes('milk') || normalized.includes('juice') || normalized.includes('broth')) return 'gal';
-    if (normalized.includes('cheese')) return 'oz';
-    if (normalized.includes('flour') || normalized.includes('sugar')) return 'lb';
+    if (normalized.includes('egg')) return 'unit'; // carton/unit
+    if (normalized.includes('milk') || normalized.includes('juice')) return 'gal';
+    if (normalized.includes('broth') || normalized.includes('stock')) return 'carton';
+    if (normalized.includes('flour') || normalized.includes('sugar') || normalized.includes('rice')) return 'bag';
+    if (normalized.includes('bread')) return 'unit';
+    if (normalized.includes('cereal') || normalized.includes('pasta')) return 'box';
+    if (normalized.includes('butter')) return 'stick';
+    if (normalized.includes('cheese')) return 'pack';
+    if (normalized.includes('water') || normalized.includes('soda')) return 'pack';
 
     // Category-based defaults
     switch (cat) {
-        case 'produce':
-            return 'pcs';
+        case 'produce': return 'unit';
+        case 'meat': return 'pack'; // Inventory focused
+        case 'dairy': return 'unit';
+        case 'grains': return 'box';
+        case 'spices': return 'jar';
+        case 'condiments': return 'bottle';
+        case 'beverages': return 'bottle';
+        case 'canned': return 'can';
+        case 'frozen': return 'bag';
+        case 'snacks': return 'box';
+        default: return 'unit';
+    }
+}
+
+/**
+ * Get relevant units for a specific category (Inventory Focused)
+ */
+export function getUnitsForCategory(category: IngredientCategory): string[] {
+    const standardUnits = ['unit', 'pack', 'box', 'bag', 'lb', 'kg'];
+
+    switch (category) {
         case 'meat':
-            return 'lb';
+            return ['lb', 'kg', 'pack'];
+        case 'produce':
+            return ['unit', 'lb', 'kg', 'bag', 'bunch', 'head', 'pack'];
         case 'dairy':
-            return 'pcs';
-        case 'grains':
-            return 'lb';
-        case 'spices':
-            return 'oz';
-        case 'condiments':
-            return 'bottle';
+            return ['gal', 'liter', 'carton', 'bottle', 'tub', 'stick', 'unit'];
         case 'beverages':
-            return 'bottle';
+            return ['bottle', 'can', 'pack', 'liter', 'gal'];
         case 'canned':
-            return 'can';
+            return ['can', 'jar', 'pack'];
+        case 'grains':
+            return ['bag', 'box', 'lb', 'kg', 'pack'];
+        case 'spices':
+            return ['jar', 'bottle', 'container', 'pack'];
+        case 'condiments':
+            return ['bottle', 'jar', 'tub', 'pack'];
         case 'frozen':
-            return 'bag';
+            return ['bag', 'box', 'pack'];
+        case 'snacks':
+            return ['bag', 'box', 'pack', 'bar'];
         default:
-            return 'pcs';
+            return standardUnits;
     }
 }

@@ -52,7 +52,15 @@ export default function Dashboard() {
 
     // Get greeting based on time
     const hour = new Date().getHours();
-    const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    const timeGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
+    // Get display name
+    const updateName = () => {
+        if (!user) return '';
+        if (user.displayName) return `, ${user.displayName.split(' ')[0]}`;
+        if (user.email) return `, ${user.email.split('@')[0]}`;
+        return '';
+    };
 
     return (
         <div className="page dashboard">
@@ -68,7 +76,7 @@ export default function Dashboard() {
                         <div className="hero-icon">
                             <ChefHat size={32} />
                         </div>
-                        <h1 className="hero-title">{greeting}! 👋</h1>
+                        <h1 className="hero-title">{timeGreeting}{updateName()}! 👋</h1>
                         <p className="hero-subtitle">What's cooking today?</p>
                     </div>
 
@@ -175,7 +183,7 @@ export default function Dashboard() {
                 {/* Stats Cards */}
                 <motion.section variants={item} className="dashboard-section">
                     <div className="stats-grid">
-                        <div className="stat-card">
+                        <Link to="/pantry" className="stat-card">
                             <div className="stat-icon stat-icon-orange">
                                 <ShoppingBasket size={20} />
                             </div>
@@ -183,9 +191,9 @@ export default function Dashboard() {
                                 <span className="stat-value">{ingredients.length}</span>
                                 <span className="stat-label">Pantry Items</span>
                             </div>
-                        </div>
+                        </Link>
 
-                        <div className="stat-card">
+                        <Link to="/recipes" state={{ activeTab: 'favorites' }} className="stat-card">
                             <div className="stat-icon stat-icon-pink">
                                 <TrendingUp size={20} />
                             </div>
@@ -193,9 +201,9 @@ export default function Dashboard() {
                                 <span className="stat-value">{favorites.length}</span>
                                 <span className="stat-label">Favorites</span>
                             </div>
-                        </div>
+                        </Link>
 
-                        <div className="stat-card">
+                        <Link to="/meal-plan" className="stat-card">
                             <div className="stat-icon stat-icon-blue">
                                 <Calendar size={20} />
                             </div>
@@ -203,7 +211,7 @@ export default function Dashboard() {
                                 <span className="stat-value">{todaysMeals.length}</span>
                                 <span className="stat-label">Today's Meals</span>
                             </div>
-                        </div>
+                        </Link>
                     </div>
                 </motion.section>
 
@@ -263,9 +271,9 @@ export default function Dashboard() {
                                 ))}
                             </div>
                             {expiringSoon.length > 4 && (
-                                <div className="reminders-footer">
+                                <Link to="/pantry" className="reminders-footer">
                                     +{expiringSoon.length - 4} more items
-                                </div>
+                                </Link>
                             )}
                         </div>
                     </motion.section>
