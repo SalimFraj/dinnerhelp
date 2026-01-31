@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     ArrowLeft,
@@ -21,7 +21,8 @@ import './RecipeDetail.css';
 export default function RecipeDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { recipes, toggleFavorite, favorites, rateRecipe } = useRecipeStore();
+    const location = useLocation();
+    const { recipes, toggleFavorite, favorites, rateRecipe, addRecipe } = useRecipeStore();
     const { ingredients } = usePantryStore();
     const { createList, addItem, getActiveList } = useShoppingStore();
     const { addMealPlan } = useMealPlanStore();
@@ -29,13 +30,19 @@ export default function RecipeDetail() {
 
     const [recipe, setRecipe] = useState<Recipe | null>(null);
     const [showMealPlanModal, setShowMealPlanModal] = useState(false);
+    const [isPreview, setIsPreview] = useState(false);
 
     useEffect(() => {
         const found = recipes.find(r => r.id === id);
         if (found) {
             setRecipe(found);
+            setIsPreview(false);
+        } else if (location.state?.recipe) {
+            // Fallback to preview data passed via navigation
+            setRecipe(location.state.recipe);
+            setIsPreview(true);
         }
-    }, [id, recipes]);
+    }, [id, recipes, location.state]);
 
     if (!recipe) {
         return (
@@ -119,6 +126,26 @@ export default function RecipeDetail() {
         addToast({ type: 'success', message: 'Rating saved!' });
     };
 
+    const handleSaveCopy = () => {
+        const newId = `custom-${Date.now()}`;
+        const newRecipe = {
+            ...recipe,
+            id: newId,
+            title: `${recipe.title} (My Version)`,
+            isCustom: true,
+            source: 'custom' as const,
+            sourceId: recipe.id,
+            isFavorite: false, // Reset rating/favorite for the copy
+            rating: 0,
+        };
+
+        // Add to store (this will sync if user is logged in)
+        useRecipeStore.getState().addRecipe(newRecipe);
+
+        addToast({ type: 'success', message: 'Recipe cloned to My Recipes!' });
+        navigate(`/recipes/${newId}`);
+    };
+
     return (
         <div className="recipe-detail-page">
             {/* Header Image */}
@@ -196,19 +223,48 @@ export default function RecipeDetail() {
 
                 {/* Actions */}
                 <div className="recipe-actions">
-                    {missingIngredients.length > 0 && (
-                        <button className="btn btn-secondary action-btn" onClick={handleAddToShoppingList}>
-                            <ShoppingCart size={18} />
-                            Add {missingIngredients.length} to List
+                    {isPreview ? (
+                        <button
+                            className="btn btn-primary action-btn"
+                            onClick={() => {
+                                if (recipe) {
+                                    addRecipe({ ...recipe, isCustom: true, source: 'ai' as const });
+                                    addToast({ type: 'success', message: 'Recipe saved to collection!' });
+                                    setIsPreview(false);
+                                    // Optionally update URL to real ID without reload?
+                                    // For now, just setting state is enough to switch mode
+                                }
+                            }}
+                        >
+                            <Sparkles size={18} />
+                            Save to Collection
                         </button>
+                    ) : (
+                        <>
+                            {missingIngredients.length > 0 && (
+                                <button className="btn btn-secondary action-btn" onClick={handleAddToShoppingList}>
+                                    <ShoppingCart size={18} />
+                                    Add {missingIngredients.length} to List
+                                </button>
+                            )}
+                            <button
+                                className="btn btn-primary action-btn"
+                                onClick={() => setShowMealPlanModal(true)}
+                            >
+                                <Calendar size={18} />
+                                Add to Plan
+                            </button>
+                            {!recipe.isCustom && (
+                                <button
+                                    className="btn btn-secondary action-btn"
+                                    onClick={handleSaveCopy}
+                                >
+                                    <Sparkles size={18} />
+                                    Save Copy
+                                </button>
+                            )}
+                        </>
                     )}
-                    <button
-                        className="btn btn-primary action-btn"
-                        onClick={() => setShowMealPlanModal(true)}
-                    >
-                        <Calendar size={18} />
-                        Add to Plan
-                    </button>
                 </div>
 
                 {/* Description */}

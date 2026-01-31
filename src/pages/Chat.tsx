@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
     Mic,
     MicOff,
@@ -10,15 +11,49 @@ import {
     ArrowUp
 } from 'lucide-react';
 import { useChatStore } from '../stores/chatStore';
-import { usePantryStore, useUIStore } from '../stores';
+import { usePantryStore, useUIStore, useRecipeStore } from '../stores';
 import { sendChatMessage, quickPrompts } from '../services/chatService';
 import './Chat.css';
 
 export default function Chat() {
+    const navigate = useNavigate();
     // Stores
     const { messages, addMessage, clearMessages, isLoading, setLoading } = useChatStore();
     const { ingredients } = usePantryStore();
+    const { addRecipe } = useRecipeStore();
     const { addToast } = useUIStore();
+
+    // ... (rest of local state)
+
+    const handleSaveRecipe = (recipe: any) => {
+        const newRecipe = {
+            ...recipe,
+            id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            isCustom: true,
+            source: 'ai' as const,
+            isFavorite: false,
+            rating: 0,
+            ingredients: recipe.ingredients || [],
+            instructions: recipe.instructions || []
+        };
+        addRecipe(newRecipe);
+        addToast({ type: 'success', message: 'Recipe saved to My Recipes!' });
+    };
+
+    const handleRecipeClick = (recipe: any) => {
+        // Construct a clean recipe object for the view
+        const viewingRecipe = {
+            ...recipe,
+            id: recipe.id || `ai-${Date.now()}`,
+            isCustom: true,
+            source: 'ai' as const,
+            isFavorite: false,
+            rating: 0,
+            ingredients: recipe.ingredients || [],
+            instructions: recipe.instructions || []
+        };
+        navigate(`/recipes/${viewingRecipe.id}`, { state: { recipe: viewingRecipe } });
+    };
 
     // Local State
     const [input, setInput] = useState('');
@@ -218,6 +253,34 @@ export default function Chat() {
                                     )}
                                     <div className="message-content">
                                         {formatMessage(msg.content)}
+
+                                        {/* AI Generated Recipes Cards */}
+                                        {msg.recipes && msg.recipes.length > 0 && (
+                                            <div className="chat-recipe-cards">
+                                                {msg.recipes.map((recipe: any) => (
+                                                    <div
+                                                        key={recipe.id}
+                                                        className="mini-recipe-card clickable"
+                                                        onClick={() => handleRecipeClick(recipe)}
+                                                        style={{ cursor: 'pointer' }}
+                                                    >
+                                                        <div className="mini-recipe-header">
+                                                            <h4>{recipe.title}</h4>
+                                                            <span className="mini-meta">{recipe.cookTime}min • {recipe.difficulty}</span>
+                                                        </div>
+                                                        <button
+                                                            className="save-recipe-btn"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleSaveRecipe(recipe);
+                                                            }}
+                                                        >
+                                                            Save
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>
