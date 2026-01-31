@@ -8,9 +8,6 @@
     position: relative;
     /* Ensure it doesn't overflow the parent layout-main */
     max-height: 100%;
-    padding-bottom: 100px;
-    /* Clear the bottom navigation */
-    /* Clear the bottom navigation */
 }
 
 /* --- Header Section --- */
@@ -313,6 +310,7 @@
     flex-direction: column;
     gap: var(--space-3);
     z-index: 20;
+    padding-bottom: 20px;
 }
 
 /* Mini Prompts Scroll above input */
