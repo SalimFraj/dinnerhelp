@@ -8,6 +8,8 @@
     position: relative;
     /* Ensure it doesn't overflow the parent layout-main */
     max-height: 100%;
+    /* Account for bottom nav */
+    padding-bottom: calc(80px + var(--space-4));
 }
 
 /* --- Header Section --- */
@@ -446,8 +448,7 @@
 
 @media (max-width: 640px) {
     .chat-page {
-        padding-bottom: 0;
-        /* Let Layout handle nav spacing if needed, but flex usually handles it */
+        /* Mobile specific adjustments if needed */
     }
 
     .message-row {
