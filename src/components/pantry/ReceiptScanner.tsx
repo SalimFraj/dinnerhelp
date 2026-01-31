@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { X, Camera, Loader, Check, Upload } from 'lucide-react';
-import Tesseract from 'tesseract.js';
+import { X, Camera, Loader, Check, Upload, Receipt } from 'lucide-react';
 import { usePantryStore, useUIStore } from '../../stores';
+import { processReceipt, getReceiptResult, type TabScannerResult } from '../../services/tabScannerService';
 import './ReceiptScanner.css';
 
 interface Props {
@@ -12,13 +12,17 @@ interface Props {
 interface ExtractedItem {
     name: string;
     selected: boolean;
+    quantity?: number;
+    price?: number;
 }
 
 export default function ReceiptScanner({ onClose }: Props) {
     const [image, setImage] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [progress, setProgress] = useState(0);
+    const [statusText, setStatusText] = useState('');
     const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
+    const [scannedData, setScannedData] = useState<TabScannerResult | null>(null);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { addIngredient } = usePantryStore();
     const { addToast } = useUIStore();
@@ -34,83 +38,66 @@ export default function ReceiptScanner({ onClose }: Props) {
         };
         reader.readAsDataURL(file);
 
-        // Process with Tesseract
+        // Start Processing
         setIsProcessing(true);
-        setProgress(0);
+        setStatusText('Uploading receipt...');
+        setExtractedItems([]);
 
         try {
-            const result = await Tesseract.recognize(file, 'eng', {
-                logger: (m) => {
-                    if (m.status === 'recognizing text') {
-                        setProgress(Math.round(m.progress * 100));
+            // 1. Upload and get token
+            const token = await processReceipt(file);
+
+            setStatusText('Analyzing receipt...');
+
+            // 2. Poll for results
+            let attempts = 0;
+            const maxAttempts = 20; // 40 seconds max (2s interval)
+
+            const pollInterval = setInterval(async () => {
+                attempts++;
+                setStatusText(`Analyzing receipt... (${attempts * 2}s)`);
+
+                try {
+                    const result = await getReceiptResult(token);
+
+                    if (result) {
+                        clearInterval(pollInterval);
+                        handleScanSuccess(result);
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(pollInterval);
+                        throw new Error('Processing timed out');
                     }
-                },
-            });
+                } catch (err) {
+                    clearInterval(pollInterval);
+                    handleError(err);
+                }
+            }, 2000);
 
-            // Parse the extracted text into potential grocery items
-            const items = parseReceiptText(result.data.text);
-            setExtractedItems(items.map(name => ({ name, selected: true })));
         } catch (error) {
-            console.error('OCR Error:', error);
-            addToast({ type: 'error', message: 'Failed to read receipt. Try a clearer image.' });
-        } finally {
-            setIsProcessing(false);
+            handleError(error);
         }
-    }, [addToast]);
+    }, []);
 
-    // Improved receipt parser
-    const parseReceiptText = (text: string): string[] => {
-        const lines = text.split('\n');
-        const items: string[] = [];
+    const handleScanSuccess = (result: TabScannerResult) => {
+        setIsProcessing(false);
+        setScannedData(result);
 
-        // Stopwords to exclude (non-food common receipt text)
-        const stopWords = [
-            'total', 'subtotal', 'tax', 'change', 'cash', 'credit', 'debit', 'visa', 'mastercard',
-            'amex', 'discover', 'auth', 'ref', 'chk', 'term', 'date', 'time', 'lb', 'oz', 'kg',
-            'qty', 'price', 'amount', 'item', 'customer', 'copy', 'store', 'phone', 'tel', 'fax',
-            'manager', 'thank', 'you', 'visit', 'again', 'welcome', 'save', 'coupon', 'card',
-            'net', 'wt', 'balance', 'due', 'tender', 'change', 'member', 'rewards', 'savings',
-            'discount', 'sale', 'regular', 'gallons', 'fuel', 'points'
-        ];
+        // Map to extracted items
+        const items: ExtractedItem[] = result.lines.map(line => ({
+            name: line.description,
+            selected: true,
+            quantity: line.qty,
+            price: line.lineTotal
+        })).filter(item => item.name && item.name.length > 2); // Basic filter
 
-        lines.forEach(line => {
-            // 1. Basic cleanup
-            let cleaned = line.trim();
-            if (!cleaned) return;
+        setExtractedItems(items);
+        addToast({ type: 'success', message: 'Receipt scanned successfully!' });
+    };
 
-            // 2. Remove price columns (often at the end of the line)
-            // e.g. "BANANAS 0.59 T" -> "BANANAS"
-            cleaned = cleaned.replace(/(\$?\s*\d+\.\d{2}\s*[A-Z]?)$/i, '');
-
-            // 3. Remove leading/trailing numbers/codes
-            // e.g. "4011 BANANAS" -> "BANANAS"
-            cleaned = cleaned.replace(/^\d+\s+/, '').replace(/\s+\d+$/, '');
-
-            // 4. Remove purely numeric parts and single distinct characters
-            cleaned = cleaned.replace(/\b\d+\b/g, '')  // Remove isolated numbers
-                .replace(/\b[A-Z]\b/g, '') // Remove single letters (tax codes etc)
-                .replace(/[^\w\s'-]/g, ''); // Remove special chars but keep ' and -
-
-            // 5. Trim again and lowercase
-            cleaned = cleaned.trim().toLowerCase();
-
-            // 6. Filtering checks
-            if (cleaned.length < 3) return; // Too short
-            if (stopWords.some(word => cleaned.includes(word))) return; // Contains stopword
-            if (/^\d+$/.test(cleaned.replace(/\s/g, ''))) return; // Only numbers remaining
-
-            // 7. Capitalize first letter of each word for display
-            const niceName = cleaned.split(' ')
-                .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-                .join(' ');
-
-            if (niceName) {
-                items.push(niceName);
-            }
-        });
-
-        // Remove duplicates and return top 20
-        return [...new Set(items)].slice(0, 20);
+    const handleError = (error: any) => {
+        console.error('Scan Error:', error);
+        setIsProcessing(false);
+        addToast({ type: 'error', message: error.message || 'Failed to scan receipt' });
     };
 
     const toggleItem = (index: number) => {
@@ -127,8 +114,8 @@ export default function ReceiptScanner({ onClose }: Props) {
         selectedItems.forEach(item => {
             addIngredient({
                 name: item.name,
-                quantity: 1,
-                unit: 'unit',
+                quantity: item.quantity || 1,
+                unit: 'unit', // Default unit
                 category: 'other',
             });
         });
@@ -156,7 +143,10 @@ export default function ReceiptScanner({ onClose }: Props) {
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="modal-header">
-                    <h2 className="modal-title">Scan Receipt</h2>
+                    <h2 className="modal-title flex items-center gap-2">
+                        <Receipt size={20} className="text-primary-500" />
+                        Scan Receipt
+                    </h2>
                     <button className="btn btn-ghost btn-icon" onClick={onClose}>
                         <X size={20} />
                     </button>
@@ -187,6 +177,9 @@ export default function ReceiptScanner({ onClose }: Props) {
                                     Choose Image
                                 </button>
                             </div>
+                            <div className="text-xs text-center text-muted mt-4">
+                                Powered by TabScanner
+                            </div>
                         </div>
                     )}
 
@@ -197,19 +190,22 @@ export default function ReceiptScanner({ onClose }: Props) {
                             )}
                             <div className="processing-overlay">
                                 <Loader size={32} className="spinner" />
-                                <p>Reading receipt... {progress}%</p>
-                                <div className="progress-bar">
-                                    <div
-                                        className="progress-fill"
-                                        style={{ width: `${progress}%` }}
-                                    />
-                                </div>
+                                <p className="font-medium">{statusText}</p>
+                                <p className="text-sm text-white/80">This may take a few seconds...</p>
                             </div>
                         </div>
                     )}
 
-                    {extractedItems.length > 0 && (
+                    {extractedItems.length > 0 && !isProcessing && (
                         <div className="extracted-items">
+                            <div className="scan-summary mb-4 p-3 bg-secondary rounded-lg text-sm">
+                                {scannedData?.establishment && <div className="font-bold">{scannedData.establishment}</div>}
+                                <div className="text-muted flex justify-between">
+                                    <span>{scannedData?.date}</span>
+                                    <span>Total: ${scannedData?.total?.toFixed(2)}</span>
+                                </div>
+                            </div>
+
                             <p className="items-instruction">
                                 Select items to add to your pantry:
                             </p>
@@ -224,7 +220,12 @@ export default function ReceiptScanner({ onClose }: Props) {
                                         <span className="checkmark">
                                             {item.selected && <Check size={14} />}
                                         </span>
-                                        <span className="item-name">{item.name}</span>
+                                        <div className="flex-1">
+                                            <span className="item-name block">{item.name}</span>
+                                            {item.price && (
+                                                <span className="text-xs text-muted">${item.price.toFixed(2)}</span>
+                                            )}
+                                        </div>
                                     </label>
                                 ))}
                             </div>
@@ -234,6 +235,7 @@ export default function ReceiptScanner({ onClose }: Props) {
                                     onClick={() => {
                                         setImage(null);
                                         setExtractedItems([]);
+                                        setScannedData(null);
                                     }}
                                 >
                                     Scan Another
