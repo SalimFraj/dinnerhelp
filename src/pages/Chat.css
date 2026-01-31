@@ -8,7 +8,8 @@
     position: relative;
     /* Ensure it doesn't overflow the parent layout-main */
     max-height: 100%;
-    padding-bottom: 85px;
+    padding-bottom: 100px;
+    /* Clear the bottom navigation */
     /* Clear the bottom navigation */
 }
 
