@@ -11,7 +11,7 @@ import {
     RefreshCw
 } from 'lucide-react';
 import { usePantryStore, useRecipeStore, useUIStore } from '../stores';
-import { fetchRecipes, generateAISuggestions } from '../services/recipeService';
+import { fetchRecipes, generateAISuggestions, searchRecipes } from '../services/recipeService';
 import type { Recipe, DifficultyLevel } from '../types';
 import RecipeCard from '../components/recipes/RecipeCard';
 import FilterModal from '../components/recipes/FilterModal';
@@ -56,6 +56,28 @@ export default function Recipes() {
             setIsLoading(false);
         }
     };
+
+    // Live Search
+    useEffect(() => {
+        const performSearch = async () => {
+            if (activeTab !== 'discover' || !searchQuery || searchQuery.length < 3) return;
+
+            setIsLoading(true);
+            try {
+                const results = await searchRecipes(searchQuery);
+                if (results && results.length > 0) {
+                    results.forEach(r => addRecipe(r));
+                }
+            } catch (error) {
+                console.error('Search failed', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        const timeoutId = setTimeout(performSearch, 500); // 500ms debounce
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery, activeTab, addRecipe]);
 
     const getAISuggestions = async () => {
         if (ingredients.length === 0) {
@@ -251,7 +273,9 @@ export default function Recipes() {
                                 ? 'Heart recipes you love to see them here'
                                 : activeTab === 'custom'
                                     ? 'Add your own recipes to build your collection'
-                                    : 'Try adjusting your search or filters'}
+                                    : searchQuery.length > 0 && searchQuery.length < 3
+                                        ? 'Keep typing to search...'
+                                        : 'Try adjusting your search or filters'}
                         </p>
                         {activeTab === 'discover' && (
                             <button className="btn btn-secondary" onClick={loadRecipes}>
