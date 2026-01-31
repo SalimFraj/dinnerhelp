@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     ChevronLeft,
     ChevronRight,
@@ -25,16 +25,26 @@ const mealTypes: { type: MealType; emoji: string; label: string }[] = [
 
 export default function MealPlan() {
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Stores
     const { mealPlans, removeMealPlan, addMealPlan } = useMealPlanStore();
     const { ingredients } = usePantryStore();
     const { recipes, addRecipe } = useRecipeStore();
     const { addToast } = useUIStore();
+
+    // Check if we are in "Selection Mode" (coming from Recipe Detail)
+    const [pendingRecipe, setPendingRecipe] = useState<Recipe | null>(
+        location.state?.selectedRecipe || null
+    );
 
     const [currentWeekStart, setCurrentWeekStart] = useState(() =>
         startOfWeek(new Date(), { weekStartsOn: 0 })
     );
     const [viewMode, setViewMode] = useState<'simple' | 'calendar'>('simple');
     const [isGenerating, setIsGenerating] = useState(false);
+
+    // Only used for the "+" button when NOT in selection mode
     const [showRecipePicker, setShowRecipePicker] = useState<{
         date: string;
         mealType: MealType;
@@ -173,6 +183,33 @@ export default function MealPlan() {
                 </div>
             </header>
 
+            {/* Selection Mode Banner */}
+            {pendingRecipe && (
+                <motion.div
+                    className="selection-banner"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                >
+                    <div className="selection-info">
+                        <Sparkles size={20} className="text-secondary" />
+                        <div>
+                            <p className="font-medium">Select a slot for <strong>{pendingRecipe.title}</strong></p>
+                            <p className="text-sm opacity-80">Tap any day to add this meal</p>
+                        </div>
+                    </div>
+                    <button
+                        className="btn btn-sm btn-secondary"
+                        onClick={() => {
+                            setPendingRecipe(null);
+                            // Clear location state without reload
+                            navigate(location.pathname, { replace: true, state: {} });
+                        }}
+                    >
+                        Cancel
+                    </button>
+                </motion.div>
+            )}
+
             {/* AI Suggestion */}
             <button
                 className="ai-generate-btn"
@@ -222,19 +259,49 @@ export default function MealPlan() {
                                         const meal = dayMeals[type];
 
                                         return (
-                                            <div key={type} className="meal-slot">
+                                            <div
+                                                key={type}
+                                                className={`meal-slot ${pendingRecipe ? 'selectable-slot' : ''}`}
+                                                onClick={() => {
+                                                    if (pendingRecipe) {
+                                                        const existing = meal ? meal.recipe?.title : null;
+                                                        if (existing && !window.confirm(`Replace ${existing} with ${pendingRecipe.title}?`)) {
+                                                            return;
+                                                        }
+
+                                                        addMealPlan({
+                                                            date: dateKey,
+                                                            mealType: type,
+                                                            recipeId: pendingRecipe.id,
+                                                            recipe: pendingRecipe,
+                                                        });
+
+                                                        addToast({ type: 'success', message: `Added ${pendingRecipe.title} to ${format(day, 'EEEE')} ${label}` });
+                                                        setPendingRecipe(null);
+                                                        navigate(location.pathname, { replace: true, state: {} });
+                                                    }
+                                                }}
+                                            >
                                                 <span className="meal-label">{emoji} {label}</span>
                                                 {meal ? (
                                                     <div className="meal-content">
                                                         <span
                                                             className="meal-title clickable"
-                                                            onClick={() => meal.recipe && handleRecipeClick(meal.recipe.id)}
+                                                            onClick={(e) => {
+                                                                if (!pendingRecipe && meal.recipe) {
+                                                                    e.stopPropagation();
+                                                                    handleRecipeClick(meal.recipe.id);
+                                                                }
+                                                            }}
                                                         >
                                                             {meal.recipe?.title || 'Recipe'}
                                                         </span>
                                                         <button
                                                             className="meal-remove"
-                                                            onClick={() => removeMealPlan(meal.id)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                removeMealPlan(meal.id);
+                                                            }}
                                                         >
                                                             <X size={14} />
                                                         </button>
@@ -242,7 +309,12 @@ export default function MealPlan() {
                                                 ) : (
                                                     <button
                                                         className="add-meal-btn"
-                                                        onClick={() => setShowRecipePicker({ date: dateKey, mealType: type })}
+                                                        onClick={(e) => {
+                                                            if (!pendingRecipe) {
+                                                                e.stopPropagation();
+                                                                setShowRecipePicker({ date: dateKey, mealType: type });
+                                                            }
+                                                        }}
                                                     >
                                                         <Plus size={14} />
                                                         Add
@@ -289,13 +361,38 @@ export default function MealPlan() {
                                 return (
                                     <div
                                         key={dateKey}
-                                        className={`calendar-cell meal-cell ${meal ? 'has-meal' : ''}`}
-                                        onClick={() => !meal && setShowRecipePicker({ date: dateKey, mealType: type })}
+                                        className={`calendar-cell meal-cell ${meal ? 'has-meal' : ''} ${pendingRecipe ? 'selectable-cell' : ''}`}
+                                        onClick={() => {
+                                            if (pendingRecipe) {
+                                                const existing = meal ? meal.recipe?.title : null;
+                                                if (existing && !window.confirm(`Replace ${existing} with ${pendingRecipe.title}?`)) {
+                                                    return;
+                                                }
+
+                                                addMealPlan({
+                                                    date: dateKey,
+                                                    mealType: type,
+                                                    recipeId: pendingRecipe.id,
+                                                    recipe: pendingRecipe,
+                                                });
+
+                                                addToast({ type: 'success', message: `Added ${pendingRecipe.title} to ${format(day, 'EEE')} ${label}` });
+                                                setPendingRecipe(null);
+                                                navigate(location.pathname, { replace: true, state: {} });
+                                            } else if (!meal) {
+                                                setShowRecipePicker({ date: dateKey, mealType: type });
+                                            }
+                                        }}
                                     >
                                         {meal ? (
                                             <div
                                                 className="cell-meal clickable"
-                                                onClick={() => meal.recipe && handleRecipeClick(meal.recipe.id)}
+                                                onClick={(e) => {
+                                                    if (!pendingRecipe && meal.recipe) {
+                                                        e.stopPropagation();
+                                                        handleRecipeClick(meal.recipe.id);
+                                                    }
+                                                }}
                                             >
                                                 <span className="cell-meal-title">{meal.recipe?.title}</span>
                                                 <button

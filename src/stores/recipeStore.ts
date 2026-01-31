@@ -152,13 +152,11 @@ export const useRecipeStore = create<RecipeState>()(
             },
 
             searchRecipes: (query) => {
-                const lowerQuery = query.toLowerCase();
-                return get().recipes.filter(
-                    (r) =>
-                        r.title.toLowerCase().includes(lowerQuery) ||
-                        r.category?.toLowerCase().includes(lowerQuery) ||
-                        r.cuisine?.toLowerCase().includes(lowerQuery)
-                );
+                const terms = query.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+                return get().recipes.filter((r) => {
+                    const searchableText = `${r.title} ${r.category || ''} ${r.cuisine || ''}`.toLowerCase();
+                    return terms.every(term => searchableText.includes(term));
+                });
             },
         }),
         {

@@ -2,8 +2,9 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Loader, RefreshCw, Check, Zap, ZapOff } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { usePantryStore, useUIStore } from '../../stores';
+import { useUIStore } from '../../stores';
 import { detectIngredientCategory, suggestUnit } from '../../services/categorizationService';
+import { actionService } from '../../services/actionService';
 import './BarcodeScanner.css';
 
 interface Props {
@@ -31,7 +32,6 @@ export default function BarcodeScanner({ onClose }: Props) {
     const [scannedProduct, setScannedProduct] = useState<ProductInfo | null>(null);
 
     // Stores
-    const { addIngredient } = usePantryStore();
     const { addToast } = useUIStore();
 
     // Initialize Scanner
@@ -200,7 +200,7 @@ export default function BarcodeScanner({ onClose }: Props) {
         const category = detectIngredientCategory(scannedProduct.name);
         const unit = suggestUnit(scannedProduct.name, category); // Uses imported service
 
-        addIngredient({
+        actionService.addPantryItem({
             name: scannedProduct.name,
             quantity: 1,
             unit: unit,

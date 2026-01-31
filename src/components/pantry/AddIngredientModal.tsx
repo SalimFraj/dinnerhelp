@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Plus, Save, Sparkles } from 'lucide-react';
 import { usePantryStore, useUIStore } from '../../stores';
+import { actionService } from '../../services/actionService';
 import { detectIngredientCategory, suggestUnit } from '../../services/categorizationService';
 import type { Ingredient, IngredientCategory } from '../../types';
 import './AddIngredientModal.css';
@@ -28,7 +29,7 @@ const categoryLabels: Record<IngredientCategory, string> = {
 const commonUnits = ['unit', 'lb', 'oz', 'kg', 'g', 'cup', 'tbsp', 'tsp', 'can', 'bottle', 'bag', 'box', 'pcs', 'gal'];
 
 export default function AddIngredientModal({ ingredient, onClose }: Props) {
-    const { addIngredientSmart, updateIngredient } = usePantryStore();
+    const { updateIngredient } = usePantryStore();
     const { addToast } = useUIStore();
 
     const [name, setName] = useState(ingredient?.name || '');
@@ -74,7 +75,7 @@ export default function AddIngredientModal({ ingredient, onClose }: Props) {
             addToast({ type: 'success', message: `Updated ${name}` });
         } else {
             // Use smart add for new ingredients
-            addIngredientSmart(
+            actionService.addPantryItemSmart(
                 name.trim(),
                 parseFloat(quantity) || 1,
                 unit || undefined, // Unit should probably stay string | undefined unless store handles it

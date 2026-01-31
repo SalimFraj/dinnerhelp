@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { X, Camera, Loader, Check, Upload, Receipt } from 'lucide-react';
-import { usePantryStore, useUIStore } from '../../stores';
+import { useUIStore } from '../../stores';
 import { processReceipt, getReceiptResult, type TabScannerResult } from '../../services/tabScannerService';
+import { actionService } from '../../services/actionService';
 import './ReceiptScanner.css';
 
 interface Props {
@@ -24,7 +25,6 @@ export default function ReceiptScanner({ onClose }: Props) {
     const [scannedData, setScannedData] = useState<TabScannerResult | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { addIngredient } = usePantryStore();
     const { addToast } = useUIStore();
 
     const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,7 +112,7 @@ export default function ReceiptScanner({ onClose }: Props) {
         const selectedItems = extractedItems.filter(item => item.selected);
 
         selectedItems.forEach(item => {
-            addIngredient({
+            actionService.addPantryItem({
                 name: item.name,
                 quantity: item.quantity || 1,
                 unit: 'unit', // Default unit

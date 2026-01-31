@@ -33,6 +33,7 @@ interface ShoppingState {
 
     // Actions
     moveCheckedToPantry: (listId: string) => void;
+    checkItemIfExists: (name: string) => void;
 }
 
 // Category mapping for smart organization
@@ -279,6 +280,35 @@ export const useShoppingStore = create<ShoppingState>()(
                 const user = useAuthStore.getState().user;
                 if (user) {
                     syncPantry(user.uid, usePantryStore.getState().ingredients);
+                }
+            },
+            checkItemIfExists: (name) => {
+                const state = get();
+                if (!state.activeListId) return;
+
+                const list = state.lists.find((l) => l.id === state.activeListId);
+                if (!list) return;
+
+                const targetName = name.toLowerCase().trim();
+
+                // Find item with loose matching
+                const item = list.items.find((i) => {
+                    const itemName = i.name.toLowerCase().trim();
+                    return itemName === targetName ||
+                        itemName.includes(targetName) ||
+                        targetName.includes(itemName);
+                });
+
+                if (item && !item.checked) {
+                    get().toggleItemChecked(state.activeListId, item.id);
+
+                    // Show toast
+                    import('./uiStore').then(({ useUIStore }) => {
+                        useUIStore.getState().addToast({
+                            type: 'success',
+                            message: `Checked off ${item.name} from shopping list`
+                        });
+                    });
                 }
             },
         }),

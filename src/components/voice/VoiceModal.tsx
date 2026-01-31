@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Mic, X, Loader } from 'lucide-react';
-import { useUIStore, usePantryStore, useShoppingStore } from '../../stores';
+import { useUIStore, useShoppingStore } from '../../stores';
 import { useNavigate } from 'react-router-dom';
 import { processVoiceIntent } from '../../services/chatService';
+import { actionService } from '../../services/actionService';
 import { detectShoppingCategory, suggestUnit } from '../../services/categorizationService';
 import './VoiceModal.css';
 
@@ -13,7 +14,7 @@ const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpee
 export default function VoiceModal() {
     const navigate = useNavigate();
     const { setVoiceListening, addToast } = useUIStore();
-    const { addIngredientSmart } = usePantryStore();
+    // Removed usePantryStore destructuring
     const [transcript, setTranscript] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [status, setStatus] = useState<'listening' | 'processing' | 'success' | 'error'>('listening');
@@ -31,7 +32,7 @@ export default function VoiceModal() {
                 case 'ADD_PANTRY':
                     if (intent.items.length > 0) {
                         intent.items.forEach(item => {
-                            addIngredientSmart(item.name, item.quantity, item.unit);
+                            actionService.addPantryItemSmart(item.name, item.quantity, item.unit);
                         });
                         setStatus('success');
                         const message = intent.items.length > 1
@@ -96,7 +97,7 @@ export default function VoiceModal() {
                 setTranscript('');
             }, 2000);
         }
-    }, [addIngredientSmart, addToast, navigate, setVoiceListening]);
+    }, [addToast, navigate, setVoiceListening]);
 
     useEffect(() => {
         if (!SpeechRecognition) {

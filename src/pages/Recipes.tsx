@@ -130,12 +130,11 @@ export default function Recipes() {
 
         // Apply search
         if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            result = result.filter(r =>
-                r.title.toLowerCase().includes(query) ||
-                r.category?.toLowerCase().includes(query) ||
-                r.cuisine?.toLowerCase().includes(query)
-            );
+            const terms = searchQuery.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+            result = result.filter(r => {
+                const searchableText = `${r.title} ${r.category || ''} ${r.cuisine || ''}`.toLowerCase();
+                return terms.every(term => searchableText.includes(term));
+            });
         }
 
         // Apply filters

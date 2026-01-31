@@ -10,11 +10,10 @@ import {
     ShoppingCart,
     Calendar,
     Check,
-    X,
     Sparkles
 } from 'lucide-react';
-import { useRecipeStore, usePantryStore, useShoppingStore, useMealPlanStore, useUIStore } from '../stores';
-import type { Recipe, MealType } from '../types';
+import { useRecipeStore, usePantryStore, useShoppingStore, useUIStore } from '../stores';
+import type { Recipe } from '../types';
 import { detectIngredientCategory } from '../services/categorizationService';
 import './RecipeDetail.css';
 
@@ -25,11 +24,9 @@ export default function RecipeDetail() {
     const { recipes, toggleFavorite, favorites, rateRecipe, addRecipe } = useRecipeStore();
     const { ingredients } = usePantryStore();
     const { createList, addItem, getActiveList } = useShoppingStore();
-    const { addMealPlan } = useMealPlanStore();
     const { addToast } = useUIStore();
 
     const [recipe, setRecipe] = useState<Recipe | null>(null);
-    const [showMealPlanModal, setShowMealPlanModal] = useState(false);
     const [isPreview, setIsPreview] = useState(false);
 
     useEffect(() => {
@@ -107,18 +104,6 @@ export default function RecipeDetail() {
             type: 'success',
             message: `Added ${missingIngredients.length} items to shopping list`
         });
-    };
-
-    const handleAddToMealPlan = (mealType: MealType) => {
-        const today = new Date().toISOString().split('T')[0];
-        addMealPlan({
-            date: today,
-            mealType,
-            recipeId: recipe.id,
-            recipe,
-        });
-        setShowMealPlanModal(false);
-        addToast({ type: 'success', message: `Added to ${mealType}` });
     };
 
     const handleRate = (rating: number) => {
@@ -249,7 +234,7 @@ export default function RecipeDetail() {
                             )}
                             <button
                                 className="btn btn-primary action-btn"
-                                onClick={() => setShowMealPlanModal(true)}
+                                onClick={() => navigate('/meal-plan', { state: { selectedRecipe: recipe } })}
                             >
                                 <Calendar size={18} />
                                 Add to Plan
@@ -318,48 +303,6 @@ export default function RecipeDetail() {
                 )}
             </motion.div>
 
-            {/* Meal Plan Modal */}
-            {showMealPlanModal && (
-                <motion.div
-                    className="modal-overlay"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onClick={() => setShowMealPlanModal(false)}
-                >
-                    <motion.div
-                        className="modal meal-plan-modal"
-                        initial={{ scale: 0.95, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="modal-header">
-                            <h2 className="modal-title">Add to Meal Plan</h2>
-                            <button
-                                className="btn btn-ghost btn-icon"
-                                onClick={() => setShowMealPlanModal(false)}
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-                        <div className="modal-body meal-type-buttons">
-                            {(['breakfast', 'lunch', 'dinner', 'snack'] as MealType[]).map(type => (
-                                <button
-                                    key={type}
-                                    className="meal-type-btn"
-                                    onClick={() => handleAddToMealPlan(type)}
-                                >
-                                    {type === 'breakfast' && '🌅'}
-                                    {type === 'lunch' && '☀️'}
-                                    {type === 'dinner' && '🌙'}
-                                    {type === 'snack' && '🍿'}
-                                    <span>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </motion.div>
-                </motion.div>
-            )}
         </div>
     );
 }
