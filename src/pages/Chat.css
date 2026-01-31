@@ -8,6 +8,8 @@
     position: relative;
     /* Ensure it doesn't overflow the parent layout-main */
     max-height: 100%;
+    padding-bottom: 85px;
+    /* Clear the bottom navigation */
 }
 
 /* --- Header Section --- */
