@@ -88,18 +88,28 @@ export default function BarcodeScanner({ onClose }: Props) {
         if (scannerRef.current?.isScanning) {
             await scannerRef.current.pause();
         }
-        // setIsScanning(false); - removed
         setLookupLoading(true);
 
-        try {
-            // Fetch product info
+        const fetchProduct = async (code: string) => {
             const response = await fetch(
-                `https://world.openfoodfacts.org/api/v0/product/${decodedText}.json`
+                `https://world.openfoodfacts.org/api/v0/product/${code}.json`
             );
-            const data = await response.json();
+            return await response.json();
+        };
 
-            if (data.status === 1 && data.product) {
-                const product = data.product;
+        try {
+            // Attempt 1: Direct scan
+            let data = await fetchProduct(decodedText);
+            let product = data.product;
+
+            // Attempt 2: Try adding leading 0 (UPC -> EAN13)
+            if (data.status !== 1 && decodedText.length === 12) {
+                console.log('Retrying with leading zero...');
+                data = await fetchProduct(`0${decodedText}`);
+                product = data.product;
+            }
+
+            if ((data.status === 1 || data.status === '1') && product) {
                 setScannedProduct({
                     name: product.product_name || product.generic_name || 'Unknown Product',
                     brand: product.brands,
@@ -107,19 +117,18 @@ export default function BarcodeScanner({ onClose }: Props) {
                     image: product.image_front_small_url
                 });
             } else {
-                setError('Product not found in database.');
-                console.log('Product lookup failed for barcode:', decodedText);
+                const msg = `Product not found (${decodedText}).`;
+                setError(msg);
+                console.log('Lookup failed:', data);
 
-                // Allow manual add logic via toast or state?
-                // For now, let user try again
                 setTimeout(() => {
                     handleResume();
                     setError(null);
-                    addToast({ type: 'warning', message: `Unknown product (${decodedText}). Try manual search.` });
+                    addToast({ type: 'warning', message: msg });
                 }, 3000);
             }
         } catch (e) {
-            setError('Network error. Try again.');
+            setError('Network error. Check connection.');
             setTimeout(() => {
                 handleResume();
                 setError(null);
