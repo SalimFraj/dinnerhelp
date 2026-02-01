@@ -195,6 +195,8 @@
     display: flex;
     gap: var(--space-3);
     margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+    /* Fix overflow on small screens */
 }
 
 .action-btn {

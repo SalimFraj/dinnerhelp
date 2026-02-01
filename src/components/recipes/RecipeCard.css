@@ -47,6 +47,32 @@
     background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
 }
 
+/* Delete Button */
+.delete-recipe-btn {
+    position: absolute;
+    top: var(--space-2);
+    right: 42px;
+    /* Position to the left of favorites button */
+    width: 36px;
+    height: 36px;
+    background: rgba(239, 68, 68, 0.8);
+    backdrop-filter: blur(4px);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    z-index: 10;
+}
+
+.delete-recipe-btn:hover {
+    background: var(--color-error);
+    transform: scale(1.1);
+}
+
 /* Favorite Button */
 .favorite-btn {
     position: absolute;

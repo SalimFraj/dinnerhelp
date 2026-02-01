@@ -1,5 +1,6 @@
-.pantry {
-    padding-bottom: calc(80px + var(--space-8));
+.page.pantry {
+    padding-bottom: calc(80px + var(--space-8) + 60px) !important;
+    /* 112px + 60px for Voice FAB clearance */
 }
 
 .ingredient-count {

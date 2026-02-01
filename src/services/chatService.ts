@@ -198,28 +198,39 @@ export async function cleanReceiptText(items: { name: string; quantity?: number;
 
     const itemStrings = items.map(i => `- ${i.name}`).join('\n');
 
-    const systemPrompt = `You are a receipt parsing assistant.
-Your job is to normalize grocery receipt item names into clean, readable ingredient names.
-Example Input:
-- pc truf parm chp
-- krog lrg eggs
-- 1lb grnd bf
+    const systemPrompt = `You are an advanced receipt parser for a smart pantry app.
+Your goal is to transform raw OCR receipt text into clean, clear, and standardized ingredient names.
 
-Example Output:
+INPUT CONTEXT:
+The user scans a grocery receipt. The text often contains:
+- Store brands (Kroger, Kirkland, Great Value) -> REMOVE these.
+- Abbreviations (chk, bnlss, sknlss) -> EXPAND these.
+- Weights/Pack sizes (1lb, 12oz, gal) -> KEEP if relevant to the item identity (e.g. "Milk Gallon"), REMOVE if just a quantity.
+- Gibberish or codes -> REMOVE.
+
+EXAMPLES:
+"KROG LRG EGGS 12CT" -> "Large Eggs"
+"PC TRUF PARM CHP" -> "Truffle Parmesan Chips"
+"BNLSS SKNLSS CHCK BRST" -> "Boneless Skinless Chicken Breast"
+"ORG BANANAS" -> "Organic Bananas"
+"GAL WHL MILK" -> "Whole Milk"
+"AVOCADO LRG" -> "Avocado"
+"MTN DEW 12PK" -> "Mountain Dew"
+
+INSTRUCTIONS:
+1. Analyze each line item.
+2. Infer the likely product.
+3. Return a clean, Title Cased string for the pantry.
+4. If the item is ambiguous, make your best guess based on common grocery items.
+5. Return a JSON object with an "items" array strictly matching the input order.
+
+JSON FORMAT:
 {
   "items": [
-    "Parmesan Truffle Chips",
-    "Large Eggs",
-    "Ground Beef"
+    "Clean Name 1",
+    "Clean Name 2"
   ]
-}
-
-Rules:
-1. Remove store codes, gibberish, and abbreviations.
-2. Keep it concise (e.g., "Mtn Dew 12pk" -> "Mountain Dew").
-3. DO NOT change quantities if they are part of the name (like 12pk), but remove standalone weights like "1lb" if it's already in the quantity field.
-4. Return a JSON object with an "items" array content matching the input order exactly.
-5. If you can't decipher it, just return the original name cleaned up slightly.`;
+}`;
 
     try {
         const response = await fetch(GROQ_API_URL, {

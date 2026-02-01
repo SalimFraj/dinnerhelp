@@ -128,15 +128,11 @@
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: background var(--transition-fast);
+    overflow: hidden;
+    /* Prevent spillover */
 }
 
-.item-checkbox:hover {
-    background: var(--bg-elevated);
-}
-
-.item-checkbox input {
-    display: none;
-}
+/* ... existing hover styles ... */
 
 .checkmark {
     width: 22px;
@@ -150,23 +146,41 @@
     flex-shrink: 0;
 }
 
-.item-checkbox input:checked+.checkmark {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: white;
+/* ... existing checkmark styles ... */
+
+.item-content {
+    flex: 1;
+    min-width: 0;
+    /* Critical for truncation to work in flex child */
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .item-name {
     font-size: var(--font-size-sm);
     color: var(--text-primary);
     text-transform: capitalize;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
 }
 
-.items-actions {
-    display: flex;
-    gap: var(--space-3);
-    padding-top: var(--space-4);
-    border-top: 1px solid var(--glass-border);
+.item-original {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-price {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-primary);
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .items-actions .btn {

@@ -173,9 +173,9 @@
     flex: 1;
     font-size: var(--font-size-sm);
     color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: visible;
+    line-height: 1.4;
 }
 
 .meal-remove {
@@ -305,10 +305,9 @@
 .cell-meal-title {
     font-size: var(--font-size-xs);
     color: var(--text-primary);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    white-space: normal;
+    overflow: visible;
+    line-height: 1.3;
 }
 
 .cell-remove {

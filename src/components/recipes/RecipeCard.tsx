@@ -5,12 +5,15 @@ import { useRecipeStore } from '../../stores';
 import type { Recipe } from '../../types';
 import './RecipeCard.css';
 
+import { Trash2 } from 'lucide-react'; // Import Trash2
+
 interface Props {
     recipe: Recipe;
     matchCount?: number;
+    onDelete?: (id: string) => void;
 }
 
-export default function RecipeCard({ recipe, matchCount = 0 }: Props) {
+export default function RecipeCard({ recipe, matchCount = 0, onDelete }: Props) {
     const { toggleFavorite, favorites } = useRecipeStore();
     const isFavorite = favorites.includes(recipe.id);
 
@@ -20,6 +23,11 @@ export default function RecipeCard({ recipe, matchCount = 0 }: Props) {
         toggleFavorite(recipe.id, recipe);
     };
 
+    const handleDelete = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (onDelete) onDelete(recipe.id);
+    };
 
     return (
         <Link to={`/recipes/${recipe.id}`} className="recipe-card-link">
@@ -36,6 +44,17 @@ export default function RecipeCard({ recipe, matchCount = 0 }: Props) {
                         <div className="recipe-card-placeholder">
                             {recipe.source === 'ai' ? <Sparkles size={32} /> : '🍽️'}
                         </div>
+                    )}
+
+                    {/* Delete Custom Recipe Button - Show only if onDelete provided */}
+                    {onDelete && (
+                        <button
+                            className="delete-recipe-btn"
+                            onClick={handleDelete}
+                            aria-label="Delete recipe"
+                        >
+                            <Trash2 size={16} />
+                        </button>
                     )}
 
                     {/* Favorite Button */}

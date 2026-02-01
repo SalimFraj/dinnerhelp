@@ -92,7 +92,8 @@ export default function Recipes() {
         setIsAILoading(true);
         try {
             const ingredientNames = ingredients.map(i => i.name);
-            const suggestions = await generateAISuggestions(ingredientNames);
+            // Request 3 suggestions for quick view
+            const suggestions = await generateAISuggestions(ingredientNames, [], 3);
 
             // Add AI recipes to the list
             suggestions.forEach(recipe => {
@@ -301,6 +302,18 @@ export default function Recipes() {
                                     <RecipeCard
                                         recipe={recipe}
                                         matchCount={getMatchCount(recipe)}
+                                        onDelete={activeTab === 'custom' ? (id) => {
+                                            // Handle delete
+                                            if (window.confirm(`Are you sure you want to delete "${recipe.title}"?`)) {
+                                                // Assuming we can just remove it from store.
+                                                // We need to import removeRecipe from useRecipeStore or add it there if missing.
+                                                // Let's check useRecipeStore in the component above.
+                                                // It currently exposes: addRecipe, favorites, recipes. 
+                                                // We might need to add removeRecipe to the destructuring.
+                                                useRecipeStore.getState().deleteRecipe(id); // Accessing directly to avoid re-render if not destructured
+                                                addToast({ type: 'success', message: 'Recipe deleted' });
+                                            }
+                                        } : undefined}
                                     />
                                 </motion.div>
                             ))}

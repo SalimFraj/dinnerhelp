@@ -251,18 +251,18 @@ export default function ReceiptScanner({ onClose }: Props) {
                                         <span className="checkmark">
                                             {item.selected && <Check size={14} />}
                                         </span>
-                                        <div className="flex-1 min-w-0">
-                                            <span className="item-name block truncate font-medium">
+                                        <div className="item-content">
+                                            <span className="item-name">
                                                 {item.name}
                                             </span>
                                             {item.name !== item.originalName && (
-                                                <span className="text-xs text-muted block truncate">
+                                                <span className="item-original">
                                                     Original: {item.originalName}
                                                 </span>
                                             )}
                                         </div>
                                         {item.price && (
-                                            <span className="text-sm font-medium text-primary-500 whitespace-nowrap">
+                                            <span className="item-price">
                                                 ${item.price.toFixed(2)}
                                             </span>
                                         )}

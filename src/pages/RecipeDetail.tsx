@@ -269,8 +269,8 @@ export default function RecipeDetail() {
                     )}
                 </div>
 
-                {/* Description */}
-                {recipe.description && (
+                {/* Description - Only show if it is an AI recipe or has significant content */}
+                {recipe.description && recipe.source === 'ai' && (
                     <section className="recipe-section">
                         <p className="recipe-description">{recipe.description}</p>
                     </section>

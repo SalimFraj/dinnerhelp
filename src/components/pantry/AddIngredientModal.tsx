@@ -44,17 +44,20 @@ export default function AddIngredientModal({ ingredient, onClose }: Props) {
 
     // Auto-detect category and suggest unit as user types
     useEffect(() => {
-        if (name.trim() && !isEditing) {
+        if (name.trim()) {
             const category = detectIngredientCategory(name);
             setDetectedCategory(category);
 
-            // Auto-suggest unit if not already set
+            // Auto-suggest unit if not already set or if switching categories significantly
+            // For now, keep it simple: only suggest if unit is default 'unit' or empty, 
+            // OR if we are editing and the user changed the name, they might want a new unit.
+            // But let's stick to the requested fix: just enable categorization.
             if (!unit || unit === 'unit') {
                 const suggested = suggestUnit(name, category);
                 setUnit(suggested);
             }
         }
-    }, [name, isEditing, unit]);
+    }, [name, unit]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

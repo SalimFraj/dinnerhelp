@@ -10,6 +10,7 @@ interface RecipeState {
     addRecipe: (recipe: Recipe) => void;
     updateRecipe: (id: string, updates: Partial<Recipe>) => void;
     removeRecipe: (id: string) => void;
+    deleteRecipe: (id: string) => void; // Alias for removeRecipe for clearer intent
     toggleFavorite: (id: string, recipe?: Recipe) => void;
     rateRecipe: (id: string, rating: number) => void;
     getFavorites: () => Recipe[];
@@ -90,6 +91,8 @@ export const useRecipeStore = create<RecipeState>()(
                     return params;
                 });
             },
+
+            deleteRecipe: (id) => get().removeRecipe(id),
 
             toggleFavorite: (id, recipeObject) => {
                 set((state) => {

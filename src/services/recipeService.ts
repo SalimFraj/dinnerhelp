@@ -100,10 +100,11 @@ function transformMealDBRecipe(meal: MealDBMeal): Recipe {
     };
 }
 
-// Generate 7-day Meal Plan using Groq
+// Generate Meal Plan or Suggestions using Groq
 export async function generateAISuggestions(
     pantryIngredients: string[],
-    favoriteRecipes: string[] = []
+    favoriteRecipes: string[] = [],
+    count: number = 21 // Default to 21 for full week plan, set to 3 for quick suggestions
 ): Promise<Recipe[]> {
     const apiKey = import.meta.env.VITE_GROQ_API_KEY;
 
@@ -115,13 +116,18 @@ export async function generateAISuggestions(
         ? `User loves these recipes: ${favoriteRecipes.slice(0, 5).join(', ')}. Use similar flavor profiles.`
         : '';
 
-    const prompt = `You are a personal chef. Create a 7-DAY MEAL PLAN (21 distinct recipes: 7 Breakfasts, 7 Lunches, 7 Dinners) based on:
+    const isWeekPlan = count > 10;
+    const taskDescription = isWeekPlan
+        ? "Create a 7-DAY MEAL PLAN (21 distinct recipes: 7 Breakfasts, 7 Lunches, 7 Dinners)"
+        : `Create ${count} distinct recipe suggestions`;
+
+    const prompt = `You are a personal chef. ${taskDescription} based on:
 1. Available Ingredients: ${pantryIngredients.join(', ')}. (Prioritize using these to reduce waste).
 2. Preferences: ${favoritesContext}
 
 REQUIREMENTS:
-- Generate exactly 21 recipes.
-- Mark each with a "category": "Breakfast", "Lunch", or "Dinner".
+- Generate exactly ${count} recipes.
+- Mark each with a "category": ${isWeekPlan ? '"Breakfast", "Lunch", or "Dinner"' : 'Current meal type or general category'}.
 - "isCustom": true (CRITICAL for saving).
 - "source": "ai".
 - Instructions can be simplified (3-5 steps).
@@ -153,7 +159,7 @@ Respond ONLY in this valid JSON format (no markdown code blocks):
             messages: [
                 {
                     role: 'system',
-                    content: 'You are a robust meal planning AI. Always respond with valid JSON containing exactly 21 recipes.',
+                    content: `You are a robust meal planning AI. Always respond with valid JSON containing exactly ${count} recipes.`,
                 },
                 {
                     role: 'user',
