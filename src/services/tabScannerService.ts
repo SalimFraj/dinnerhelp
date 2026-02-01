@@ -1,5 +1,4 @@
 const API_KEY = import.meta.env.VITE_TABSCANNER_API_KEY || '';
-const API_URL = '/api/tabscanner';
 
 export interface TabScannerItem {
     description: string;
@@ -30,11 +29,9 @@ export const processReceipt = async (file: File): Promise<string> => {
     formData.append('receiptImage', file);
 
     try {
-        const response = await fetch(`${API_URL}/process`, {
+        // Use our Vercel Serverless Function for the upload
+        const response = await fetch('/api/scan-process', {
             method: 'POST',
-            headers: {
-                'apikey': API_KEY,
-            },
             body: formData,
         });
 
@@ -57,11 +54,9 @@ export const getReceiptResult = async (token: string): Promise<TabScannerResult 
     }
 
     try {
-        const response = await fetch(`${API_URL}/result/${token}`, {
+        // Use our Vercel Serverless Function for the result
+        const response = await fetch(`/api/scan-result?token=${token}`, {
             method: 'GET',
-            headers: {
-                'apikey': API_KEY,
-            },
         });
 
         const data = await response.json();
