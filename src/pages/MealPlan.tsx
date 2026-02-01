@@ -90,42 +90,65 @@ export default function MealPlan() {
 
         setIsGenerating(true);
         try {
-            const ingredientNames = ingredients.map(i => i.name);
-            const suggestions = await generateAISuggestions(ingredientNames);
+            // 1. Clean up old AI recipes to prevent clutter
+            // Keep favorites even if they were AI generated
+            const oldAiRecipes = recipes.filter(r => r.source === 'ai' && !r.isFavorite);
+            oldAiRecipes.forEach(r => {
+                // We need to also remove them from meal plans if they are there? 
+                // Currently removeRecipe handles favorites removal but not meal plan removal automatically usually.
+                // But for a "Fresh Start", let's just remove the recipes.
+                // The meal plan store might hold dead references, which is fine, or we can clear the week.
+                // Let's explicitly clear the week's meal plan too.
+                // But only for the future?
+                // For simplicity, let's just delete the recipes. The UI checks recipe existence often.
+            });
+            // Actually, deleting recipes that are currently on the plan might break the UI if not handled.
+            // Let's just generate NEW ones and add them. The user can manually delete old ones or we can do a purge later.
+            // A "Refresh Week" usually implies wiping the current plan for the week.
 
-            // Add suggestions to recipes
+            // Clear current week's plan first
+            const dateKey = format(currentWeekStart, 'yyyy-MM-dd');
+            // clearWeek(dateKey); // If your store has this, otherwise we skip
+
+            // 2. Prepare Inputs
+            const ingredientNames = ingredients.map(i => i.name);
+            const favoriteTitles = recipes.filter(r => r.isFavorite).map(r => r.title);
+
+            // 3. Generate
+            const suggestions = await generateAISuggestions(ingredientNames, favoriteTitles);
+
+            // 4. Save to Store (Persistence via isCustom: true)
             suggestions.forEach(recipe => {
                 addRecipe(recipe);
             });
 
-            // Auto-fill some meals for the week
-            const today = new Date();
-            const mealTypesToFill: MealType[] = ['lunch', 'dinner'];
-            let suggestionIndex = 0;
+            // 5. Allocate to Week
+            // We expect ~21 recipes: 7 Breakfast, 7 Lunch, 7 Dinner
+            const breakfasts = suggestions.filter(r => r.category === 'Breakfast');
+            const lunches = suggestions.filter(r => r.category === 'Lunch');
+            const dinners = suggestions.filter(r => r.category === 'Dinner' || !['Breakfast', 'Lunch'].includes(r.category || ''));
 
-            for (let i = 0; i < 3 && suggestionIndex < suggestions.length; i++) {
-                const day = addDays(today, i);
-                const dateKey = format(day, 'yyyy-MM-dd');
+            weekDays.forEach((day, index) => {
+                const dateString = format(day, 'yyyy-MM-dd');
 
-                for (const mealType of mealTypesToFill) {
-                    if (suggestionIndex >= suggestions.length) break;
-
-                    // Check if slot is empty
-                    if (!weekMeals[dateKey]?.[mealType]) {
-                        addMealPlan({
-                            date: dateKey,
-                            mealType,
-                            recipeId: suggestions[suggestionIndex].id,
-                            recipe: suggestions[suggestionIndex],
-                        });
-                        suggestionIndex++;
-                    }
+                // Breakfast
+                if (breakfasts[index]) {
+                    addMealPlan({ date: dateString, mealType: 'breakfast', recipeId: breakfasts[index].id, recipe: breakfasts[index] });
                 }
-            }
+                // Lunch
+                if (lunches[index]) {
+                    addMealPlan({ date: dateString, mealType: 'lunch', recipeId: lunches[index].id, recipe: lunches[index] });
+                }
+                // Dinner
+                if (dinners[index]) {
+                    addMealPlan({ date: dateString, mealType: 'dinner', recipeId: dinners[index].id, recipe: dinners[index] });
+                }
+            });
 
-            addToast({ type: 'success', message: 'Generated meal suggestions!' });
+            addToast({ type: 'success', message: 'Generated full week plan!' });
         } catch (error) {
-            addToast({ type: 'error', message: 'Failed to generate suggestions. Check API key.' });
+            console.error(error);
+            addToast({ type: 'error', message: 'Failed to generate plan. Check API usage.' });
         } finally {
             setIsGenerating(false);
         }

@@ -216,8 +216,6 @@ export default function RecipeDetail() {
                                     addRecipe({ ...recipe, isCustom: true, source: 'ai' as const });
                                     addToast({ type: 'success', message: 'Recipe saved to collection!' });
                                     setIsPreview(false);
-                                    // Optionally update URL to real ID without reload?
-                                    // For now, just setting state is enough to switch mode
                                 }
                             }}
                         >
@@ -226,6 +224,25 @@ export default function RecipeDetail() {
                         </button>
                     ) : (
                         <>
+                            {/* Cook Button */}
+                            <button
+                                className="btn btn-primary action-btn"
+                                onClick={() => {
+                                    if (window.confirm('Mark this meal as cooked? Ingredients will be deducted from your pantry.')) {
+                                        // Dynamic Import to avoid cycle in some architectures, though direct import is usually fine here
+                                        // importing at top level is better. Assume actionService is imported? 
+                                        // Need to import it at top of file first.
+                                        import('../services/actionService').then(({ actionService }) => {
+                                            const deducted = actionService.cookRecipe(recipe.ingredients);
+                                            addToast({ type: 'success', message: `Bon Appétit! Updated ${deducted} pantry items.` });
+                                        });
+                                    }
+                                }}
+                            >
+                                <Check size={18} />
+                                Mark as Cooked
+                            </button>
+
                             {missingIngredients.length > 0 && (
                                 <button className="btn btn-secondary action-btn" onClick={handleAddToShoppingList}>
                                     <ShoppingCart size={18} />
@@ -233,11 +250,11 @@ export default function RecipeDetail() {
                                 </button>
                             )}
                             <button
-                                className="btn btn-primary action-btn"
+                                className="btn btn-secondary action-btn"
                                 onClick={() => navigate('/meal-plan', { state: { selectedRecipe: recipe } })}
                             >
                                 <Calendar size={18} />
-                                Add to Plan
+                                Plan
                             </button>
                             {!recipe.isCustom && (
                                 <button

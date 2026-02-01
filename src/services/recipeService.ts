@@ -100,32 +100,40 @@ function transformMealDBRecipe(meal: MealDBMeal): Recipe {
     };
 }
 
-// Generate AI recipe suggestions using Groq
-export async function generateAISuggestions(pantryIngredients: string[]): Promise<Recipe[]> {
+// Generate 7-day Meal Plan using Groq
+export async function generateAISuggestions(
+    pantryIngredients: string[],
+    favoriteRecipes: string[] = []
+): Promise<Recipe[]> {
     const apiKey = import.meta.env.VITE_GROQ_API_KEY;
 
     if (!apiKey) {
         throw new Error('Groq API key not configured');
     }
 
-    const prompt = `You are a helpful chef assistant. Based on these available ingredients: ${pantryIngredients.join(', ')}.
+    const favoritesContext = favoriteRecipes.length > 0
+        ? `User loves these recipes: ${favoriteRecipes.slice(0, 5).join(', ')}. Use similar flavor profiles.`
+        : '';
 
-Generate 3 recipe suggestions that can be made primarily with these ingredients. For each recipe, provide:
-- A creative title
-- Brief description (1-2 sentences)
-- Cook time in minutes
-- Difficulty (easy, medium, or hard)
-- Servings
-- List of ingredients with quantities
-- Step-by-step instructions
+    const prompt = `You are a personal chef. Create a 7-DAY MEAL PLAN (21 distinct recipes: 7 Breakfasts, 7 Lunches, 7 Dinners) based on:
+1. Available Ingredients: ${pantryIngredients.join(', ')}. (Prioritize using these to reduce waste).
+2. Preferences: ${favoritesContext}
 
-Respond in JSON format:
+REQUIREMENTS:
+- Generate exactly 21 recipes.
+- Mark each with a "category": "Breakfast", "Lunch", or "Dinner".
+- "isCustom": true (CRITICAL for saving).
+- "source": "ai".
+- Instructions can be simplified (3-5 steps).
+
+Respond ONLY in this valid JSON format (no markdown code blocks):
 {
   "recipes": [
     {
       "title": "Recipe Name",
+      "category": "Breakfast",
       "description": "Brief description",
-      "cookTime": 30,
+      "cookTime": 15,
       "difficulty": "easy",
       "servings": 4,
       "ingredients": [{"name": "ingredient", "quantity": "1 cup"}],
@@ -145,7 +153,7 @@ Respond in JSON format:
             messages: [
                 {
                     role: 'system',
-                    content: 'You are a helpful chef that creates recipes based on available ingredients. Always respond with valid JSON.',
+                    content: 'You are a robust meal planning AI. Always respond with valid JSON containing exactly 21 recipes.',
                 },
                 {
                     role: 'user',
@@ -153,7 +161,8 @@ Respond in JSON format:
                 },
             ],
             temperature: 0.7,
-            max_tokens: 2000,
+            max_tokens: 6000,
+            response_format: { type: 'json_object' }
         }),
     });
 
@@ -168,13 +177,16 @@ Respond in JSON format:
         throw new Error('No response from AI');
     }
 
-    // Parse JSON from response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-        throw new Error('Invalid AI response format');
+    // Parse JSON
+    let parsed;
+    try {
+        parsed = JSON.parse(content);
+    } catch (e) {
+        // Fallback cleanup if model adds markdown
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('Invalid AI response format');
+        parsed = JSON.parse(jsonMatch[0]);
     }
-
-    const parsed = JSON.parse(jsonMatch[0]);
 
     return parsed.recipes.map((recipe: any, index: number): Recipe => ({
         id: `ai-${Date.now()}-${index}`,
@@ -189,9 +201,13 @@ Respond in JSON format:
         })),
         instructions: recipe.instructions || [],
         source: 'ai',
+        // Ensure category matches one of our expected types if possible, or keep as string
+        category: recipe.category || 'Dinner',
+        cuisine: 'International',
         isFavorite: false,
         rating: 0,
-        isCustom: false,
+        isCustom: true, // Key for persistence
+        createdAt: new Date().toISOString()
     }));
 }
 
