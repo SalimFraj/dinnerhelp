@@ -92,22 +92,14 @@ export default function MealPlan() {
         try {
             // 1. Clean up old AI recipes to prevent clutter
             // Keep favorites even if they were AI generated
-            const oldAiRecipes = recipes.filter(r => r.source === 'ai' && !r.isFavorite);
-            oldAiRecipes.forEach(r => {
-                // We need to also remove them from meal plans if they are there? 
-                // Currently removeRecipe handles favorites removal but not meal plan removal automatically usually.
-                // But for a "Fresh Start", let's just remove the recipes.
-                // The meal plan store might hold dead references, which is fine, or we can clear the week.
-                // Let's explicitly clear the week's meal plan too.
-                // But only for the future?
-                // For simplicity, let's just delete the recipes. The UI checks recipe existence often.
-            });
+            // const oldAiRecipes = recipes.filter(r => r.source === 'ai' && !r.isFavorite);
+            // Unused logic removed for build fix
             // Actually, deleting recipes that are currently on the plan might break the UI if not handled.
             // Let's just generate NEW ones and add them. The user can manually delete old ones or we can do a purge later.
             // A "Refresh Week" usually implies wiping the current plan for the week.
 
             // Clear current week's plan first
-            const dateKey = format(currentWeekStart, 'yyyy-MM-dd');
+            // Unused val removed
             // clearWeek(dateKey); // If your store has this, otherwise we skip
 
             // 2. Prepare Inputs
