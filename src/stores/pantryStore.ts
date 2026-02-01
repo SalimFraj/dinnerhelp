@@ -8,7 +8,7 @@ import { useAuthStore } from './authStore';
 interface PantryState {
     ingredients: Ingredient[];
     addIngredient: (ingredient: Omit<Ingredient, 'id' | 'addedAt'>) => void;
-    addIngredientSmart: (name: string, quantity?: number, unit?: string, expirationDate?: string) => void;
+    addIngredientSmart: (name: string, quantity?: number, unit?: string, expirationDate?: string, price?: number) => void;
     updateIngredient: (id: string, updates: Partial<Ingredient>) => void;
     removeIngredient: (id: string) => void;
     clearPantry: () => void;
@@ -47,7 +47,7 @@ export const usePantryStore = create<PantryState>()(
             },
 
             // Smart add - auto-detects category and unit
-            addIngredientSmart: (name, quantity = 1, unit, expirationDate) => {
+            addIngredientSmart: (name, quantity = 1, unit, expirationDate, price) => {
                 const category = detectIngredientCategory(name);
                 const suggestedUnit = unit || suggestUnit(name, category);
 
@@ -59,6 +59,8 @@ export const usePantryStore = create<PantryState>()(
                     unit: suggestedUnit,
                     expirationDate: expirationDate || null,
                     addedAt: new Date().toISOString(),
+                    price: price || 0,
+                    unitPrice: price ? price / quantity : 0,
                 };
 
                 set((state) => {

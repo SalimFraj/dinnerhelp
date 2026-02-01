@@ -8,6 +8,8 @@ export interface Ingredient {
     unit: string;
     expirationDate?: string | null;
     addedAt: string;
+    price?: number;        // Total price for the quantity
+    unitPrice?: number;    // Price per unit
 }
 
 export type IngredientCategory =

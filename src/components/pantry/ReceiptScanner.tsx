@@ -2,8 +2,9 @@ import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { X, Camera, Loader, Check, Upload, Receipt } from 'lucide-react';
 import { useUIStore } from '../../stores';
+import { usePantryStore } from '../../stores/pantryStore';
 import { processReceipt, getReceiptResult, type TabScannerResult } from '../../services/tabScannerService';
-import { actionService } from '../../services/actionService';
+import { cleanReceiptText } from '../../services/chatService';
 import './ReceiptScanner.css';
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 
 interface ExtractedItem {
     name: string;
+    originalName: string;
     selected: boolean;
     quantity?: number;
     price?: number;
@@ -20,12 +22,14 @@ interface ExtractedItem {
 export default function ReceiptScanner({ onClose }: Props) {
     const [image, setImage] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isCleaning, setIsCleaning] = useState(false);
     const [statusText, setStatusText] = useState('');
     const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
     const [scannedData, setScannedData] = useState<TabScannerResult | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { addToast } = useUIStore();
+    const { addIngredientSmart } = usePantryStore();
 
     const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -62,7 +66,7 @@ export default function ReceiptScanner({ onClose }: Props) {
 
                     if (result) {
                         clearInterval(pollInterval);
-                        handleScanSuccess(result);
+                        await handleScanSuccess(result);
                     } else if (attempts >= maxAttempts) {
                         clearInterval(pollInterval);
                         throw new Error('Processing timed out');
@@ -78,25 +82,47 @@ export default function ReceiptScanner({ onClose }: Props) {
         }
     }, []);
 
-    const handleScanSuccess = (result: TabScannerResult) => {
+    const handleScanSuccess = async (result: TabScannerResult) => {
         setIsProcessing(false);
+        setIsCleaning(true); // Start AI cleaning phase
         setScannedData(result);
 
-        // Map to extracted items
-        const items: ExtractedItem[] = result.lines.map(line => ({
-            name: line.description,
-            selected: true,
-            quantity: line.qty,
-            price: line.lineTotal
-        })).filter(item => item.name && item.name.length > 2); // Basic filter
+        // Map initial raw items
+        const rawItems = result.lines
+            .filter(line => line.description.length > 2)
+            .map(line => ({
+                name: line.description,
+                quantity: line.qty,
+                price: line.lineTotal
+            }));
 
-        setExtractedItems(items);
-        addToast({ type: 'success', message: 'Receipt scanned successfully!' });
+        try {
+            // 3. AI Cleaning Step
+            const cleaned = await cleanReceiptText(rawItems);
+
+            setExtractedItems(cleaned.map(item => ({
+                ...item,
+                selected: true
+            })));
+
+            addToast({ type: 'success', message: 'Receipt scanned & cleaned!' });
+        } catch (error) {
+            console.error('Cleaning failed', error);
+            // Fallback to raw items
+            setExtractedItems(rawItems.map(item => ({
+                ...item,
+                originalName: item.name,
+                selected: true
+            })));
+        } finally {
+            setIsCleaning(false);
+        }
     };
 
     const handleError = (error: any) => {
         console.error('Scan Error:', error);
         setIsProcessing(false);
+        setIsCleaning(false);
         addToast({ type: 'error', message: error.message || 'Failed to scan receipt' });
     };
 
@@ -112,12 +138,13 @@ export default function ReceiptScanner({ onClose }: Props) {
         const selectedItems = extractedItems.filter(item => item.selected);
 
         selectedItems.forEach(item => {
-            actionService.addPantryItem({
-                name: item.name,
-                quantity: item.quantity || 1,
-                unit: 'unit', // Default unit
-                category: 'other',
-            });
+            addIngredientSmart(
+                item.name,
+                item.quantity || 1,
+                undefined, // auto-detect unit
+                undefined, // no expiration yet
+                item.price // Pass price data
+            );
         });
 
         addToast({
@@ -183,26 +210,30 @@ export default function ReceiptScanner({ onClose }: Props) {
                         </div>
                     )}
 
-                    {isProcessing && (
+                    {(isProcessing || isCleaning) && (
                         <div className="receipt-processing">
                             {image && (
                                 <img src={image} alt="Receipt" className="receipt-preview" />
                             )}
                             <div className="processing-overlay">
                                 <Loader size={32} className="spinner" />
-                                <p className="font-medium">{statusText}</p>
-                                <p className="text-sm text-white/80">This may take a few seconds...</p>
+                                <p className="font-medium">
+                                    {isCleaning ? 'AI Cleaning items...' : statusText}
+                                </p>
+                                <p className="text-sm text-white/80">
+                                    {isCleaning ? 'Making it look nice ✨' : 'This may take a few seconds...'}
+                                </p>
                             </div>
                         </div>
                     )}
 
-                    {extractedItems.length > 0 && !isProcessing && (
+                    {extractedItems.length > 0 && !isProcessing && !isCleaning && (
                         <div className="extracted-items">
                             <div className="scan-summary mb-4 p-3 bg-secondary rounded-lg text-sm">
-                                {scannedData?.establishment && <div className="font-bold">{scannedData.establishment}</div>}
+                                {scannedData?.establishment && <div className="font-bold text-lg mb-1">{scannedData.establishment}</div>}
                                 <div className="text-muted flex justify-between">
                                     <span>{scannedData?.date}</span>
-                                    <span>Total: ${scannedData?.total?.toFixed(2)}</span>
+                                    <span className="font-medium text-primary-500">Total: ${scannedData?.total?.toFixed(2)}</span>
                                 </div>
                             </div>
 
@@ -220,12 +251,21 @@ export default function ReceiptScanner({ onClose }: Props) {
                                         <span className="checkmark">
                                             {item.selected && <Check size={14} />}
                                         </span>
-                                        <div className="flex-1">
-                                            <span className="item-name block">{item.name}</span>
-                                            {item.price && (
-                                                <span className="text-xs text-muted">${item.price.toFixed(2)}</span>
+                                        <div className="flex-1 min-w-0">
+                                            <span className="item-name block truncate font-medium">
+                                                {item.name}
+                                            </span>
+                                            {item.name !== item.originalName && (
+                                                <span className="text-xs text-muted block truncate">
+                                                    Original: {item.originalName}
+                                                </span>
                                             )}
                                         </div>
+                                        {item.price && (
+                                            <span className="text-sm font-medium text-primary-500 whitespace-nowrap">
+                                                ${item.price.toFixed(2)}
+                                            </span>
+                                        )}
                                     </label>
                                 ))}
                             </div>

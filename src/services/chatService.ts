@@ -189,3 +189,86 @@ export const quickPrompts = [
     { emoji: '👨‍👩‍👧‍👦', text: 'Family dinner', prompt: "What's a good family-friendly dinner I can make?" },
     { emoji: '🎉', text: 'Something special', prompt: "I want to make something special tonight. Any ideas?" },
 ];
+
+export async function cleanReceiptText(items: { name: string; quantity?: number; price?: number }[]): Promise<{ name: string; quantity?: number; price?: number; originalName: string }[]> {
+    if (!GROQ_API_KEY) {
+        console.warn('Groq API Key missing, skipping AI cleaning');
+        return items.map(i => ({ ...i, originalName: i.name }));
+    }
+
+    const itemStrings = items.map(i => `- ${i.name}`).join('\n');
+
+    const systemPrompt = `You are a receipt parsing assistant.
+Your job is to normalize grocery receipt item names into clean, readable ingredient names.
+Example Input:
+- pc truf parm chp
+- krog lrg eggs
+- 1lb grnd bf
+
+Example Output:
+{
+  "items": [
+    "Parmesan Truffle Chips",
+    "Large Eggs",
+    "Ground Beef"
+  ]
+}
+
+Rules:
+1. Remove store codes, gibberish, and abbreviations.
+2. Keep it concise (e.g., "Mtn Dew 12pk" -> "Mountain Dew").
+3. DO NOT change quantities if they are part of the name (like 12pk), but remove standalone weights like "1lb" if it's already in the quantity field.
+4. Return a JSON object with an "items" array content matching the input order exactly.
+5. If you can't decipher it, just return the original name cleaned up slightly.`;
+
+    try {
+        const response = await fetch(GROQ_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+            },
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: itemStrings }
+                ],
+                temperature: 0.1,
+                response_format: { type: 'json_object' }
+            }),
+        });
+
+        if (!response.ok) throw new Error('AI request failed');
+
+        const data = await response.json();
+        const content = data.choices[0]?.message?.content;
+
+        let cleanedNames: string[] = [];
+        try {
+            const parsed = JSON.parse(content);
+            if (parsed.items && Array.isArray(parsed.items)) {
+                cleanedNames = parsed.items;
+            } else if (Array.isArray(parsed)) {
+                cleanedNames = parsed;
+            } else {
+                // Try to find any array
+                const firstArray = Object.values(parsed).find(v => Array.isArray(v));
+                if (firstArray) cleanedNames = firstArray as string[];
+            }
+        } catch (e) {
+            console.error('Failed to parse AI cleaning response', e);
+            cleanedNames = [];
+        }
+
+        return items.map((item, index) => ({
+            ...item,
+            originalName: item.name,
+            name: cleanedNames[index] || item.name
+        }));
+
+    } catch (error) {
+        console.error('AI Receipt Cleaning Error:', error);
+        return items.map(i => ({ ...i, originalName: i.name }));
+    }
+}
