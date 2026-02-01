@@ -65,6 +65,10 @@ export const getReceiptResult = async (token: string): Promise<TabScannerResult 
 
         const data = await response.json();
 
+        if (!response.ok) {
+            throw new Error(data.details || data.error || `Server Error: ${response.status}`);
+        }
+
         if (data.status === 'done') {
             return {
                 lines: data.result.lineItems.map((item: any) => ({
