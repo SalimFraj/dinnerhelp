@@ -22,9 +22,9 @@ export const actionService = {
     /**
      * Smart add ingredient to pantry and check off shopping list
      */
-    addPantryItemSmart: (name: string, quantity?: number, unit?: string, expirationDate?: string) => {
+    addPantryItemSmart: (name: string, quantity?: number, unit?: string, expirationDate?: string, price?: number) => {
         // 1. Add to pantry
-        usePantryStore.getState().addIngredientSmart(name, quantity, unit, expirationDate);
+        usePantryStore.getState().addIngredientSmart(name, quantity, unit, expirationDate, price);
 
         // 2. Check off shopping list
         useShoppingStore.getState().checkItemIfExists(name);
