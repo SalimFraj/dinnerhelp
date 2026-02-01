@@ -7,9 +7,11 @@ import {
     ShoppingCart,
     History,
     DollarSign,
-    Copy
+    Copy,
+    Sparkles
 } from 'lucide-react';
 import { useShoppingStore, useUIStore } from '../stores';
+import ImportListModal from '../components/shopping/ImportListModal';
 import type { ShoppingCategory } from '../types';
 import './Shopping.css';
 
@@ -47,6 +49,7 @@ export default function Shopping() {
     const [showAddItem, setShowAddItem] = useState(false);
     const [newItemName, setNewItemName] = useState('');
     const [showHistory, setShowHistory] = useState(false);
+    const [showImport, setShowImport] = useState(false);
 
     const activeList = getActiveList();
 
@@ -132,6 +135,13 @@ export default function Shopping() {
             <header className="page-header">
                 <h1 className="page-title">Shopping</h1>
                 <div className="header-actions">
+                    <button
+                        className="btn btn-ghost btn-icon"
+                        onClick={() => setShowImport(true)}
+                        title="Smart Import"
+                    >
+                        <Sparkles size={20} />
+                    </button>
                     <button
                         className="btn btn-ghost btn-icon"
                         onClick={() => setShowHistory(!showHistory)}
@@ -350,6 +360,15 @@ export default function Shopping() {
                             New List
                         </button>
                     </motion.div>
+                )}
+            </AnimatePresence>
+            {/* Import Modal */}
+            <AnimatePresence>
+                {showImport && activeListId && (
+                    <ImportListModal
+                        listId={activeListId}
+                        onClose={() => setShowImport(false)}
+                    />
                 )}
             </AnimatePresence>
         </div>

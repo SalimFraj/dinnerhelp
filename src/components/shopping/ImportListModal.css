@@ -1,0 +1,38 @@
+.import-modal {
+    max-width: 500px;
+    width: 90%;
+}
+
+.import-textarea {
+    min-height: 200px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.preview-list {
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.preview-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.preview-item:hover {
+    background: var(--bg-elevated);
+}
+
+.preview-item input {
+    display: none;
+}
