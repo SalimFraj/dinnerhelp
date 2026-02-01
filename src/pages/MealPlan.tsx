@@ -30,7 +30,7 @@ export default function MealPlan() {
     // Stores
     const { mealPlans, removeMealPlan, addMealPlan } = useMealPlanStore();
     const { ingredients } = usePantryStore();
-    const { recipes, addRecipe } = useRecipeStore();
+    const { recipes, addRecipe, removeRecipe } = useRecipeStore();
     const { addToast } = useUIStore();
 
     // Check if we are in "Selection Mode" (coming from Recipe Detail)
@@ -92,15 +92,19 @@ export default function MealPlan() {
         try {
             // 1. Clean up old AI recipes to prevent clutter
             // Keep favorites even if they were AI generated
-            // const oldAiRecipes = recipes.filter(r => r.source === 'ai' && !r.isFavorite);
-            // Unused logic removed for build fix
-            // Actually, deleting recipes that are currently on the plan might break the UI if not handled.
-            // Let's just generate NEW ones and add them. The user can manually delete old ones or we can do a purge later.
-            // A "Refresh Week" usually implies wiping the current plan for the week.
+            const oldAiRecipes = recipes.filter(r => r.source === 'ai' && !r.isFavorite);
+
+            // Remove old AI recipes
+            oldAiRecipes.forEach(r => {
+                removeRecipe(r.id);
+            });
 
             // Clear current week's plan first
-            // Unused val removed
-            // clearWeek(dateKey); // If your store has this, otherwise we skip
+            weekDays.forEach(day => {
+                const dateKey = format(day, 'yyyy-MM-dd');
+                const mealsToRemove = mealPlans.filter(p => p.date === dateKey);
+                mealsToRemove.forEach(p => removeMealPlan(p.id));
+            });
 
             // 2. Prepare Inputs
             const ingredientNames = ingredients.map(i => i.name);
