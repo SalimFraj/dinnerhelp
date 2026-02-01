@@ -9,6 +9,7 @@ import Shopping from './pages/Shopping';
 import MealPlan from './pages/MealPlan';
 import RecipeDetail from './pages/RecipeDetail';
 import Chat from './pages/Chat';
+import Analytics from './pages/Analytics';
 import Auth from './pages/Auth';
 import FamilySettings from './pages/FamilySettings';
 import { useAuthStore } from './stores/authStore';
@@ -77,6 +78,7 @@ function App() {
             <Route path="shopping" element={<Shopping />} />
             <Route path="meal-plan" element={<MealPlan />} />
             <Route path="chat" element={<Chat />} />
+            <Route path="analytics" element={<Analytics />} />
             <Route path="family" element={<FamilySettings />} />
           </Route>
         </Routes>

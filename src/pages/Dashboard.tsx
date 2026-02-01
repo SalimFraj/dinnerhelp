@@ -13,7 +13,7 @@ import {
     LogIn,
     Users
 } from 'lucide-react';
-import { usePantryStore, useRecipeStore, useMealPlanStore } from '../stores';
+import { usePantryStore, useMealPlanStore } from '../stores';
 import { useAuthStore } from '../stores/authStore';
 import { getExpiryStatus } from '../services/expiryService';
 import './Dashboard.css';
@@ -34,11 +34,9 @@ const item = {
 export default function Dashboard() {
     const navigate = useNavigate();
     const { ingredients } = usePantryStore();
-    const { getFavorites } = useRecipeStore();
     const { mealPlans } = useMealPlanStore();
     const { user } = useAuthStore();
 
-    const favorites = getFavorites();
     const today = new Date().toISOString().split('T')[0];
     const todaysMeals = mealPlans.filter(p => p.date === today);
 
@@ -193,13 +191,13 @@ export default function Dashboard() {
                             </div>
                         </Link>
 
-                        <Link to="/recipes" state={{ activeTab: 'favorites' }} className="stat-card">
+                        <Link to="/analytics" className="stat-card">
                             <div className="stat-icon stat-icon-pink">
                                 <TrendingUp size={20} />
                             </div>
                             <div className="stat-content">
-                                <span className="stat-value">{favorites.length}</span>
-                                <span className="stat-label">Favorites</span>
+                                <span className="stat-value">Analytics</span>
+                                <span className="stat-label">Spending</span>
                             </div>
                         </Link>
 
