@@ -30,7 +30,8 @@ export default async function handler(req, res) {
         console.log(`Proxying Result Request for token: ${token}`);
 
         // 4. Fetch from TabScanner
-        const apiResponse = await fetch(`https://api.tabscanner.com/api/2/result/${token}`, {
+        // Note: Result endpoint does NOT use version number in path
+        const apiResponse = await fetch(`https://api.tabscanner.com/api/result/${token}`, {
             method: 'GET',
             headers: {
                 'apikey': apiKey
