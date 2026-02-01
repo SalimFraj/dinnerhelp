@@ -283,3 +283,69 @@ JSON FORMAT:
         return items.map(i => ({ ...i, originalName: i.name }));
     }
 }
+
+export async function parseShoppingList(rawText: string): Promise<{ name: string; quantity: number; category?: string }[]> {
+    if (!GROQ_API_KEY) {
+        console.warn('Groq API Key missing, skipping AI parsing');
+        return rawText.split('\n').filter(s => s.trim()).map(s => ({ name: s.trim(), quantity: 1 }));
+    }
+
+    const systemPrompt = `You are a smart shopping list parser.
+Your job is to convert unstructured text into a structured shopping list.
+
+INPUT:
+"2 milk, eggs, gallon of water, 1lb beef"
+
+OUTPUT JSON:
+{
+  "items": [
+    { "name": "Milk", "quantity": 2, "category": "dairy" },
+    { "name": "Eggs", "quantity": 12, "category": "dairy" },
+    { "name": "Water", "quantity": 1, "category": "beverages", "unit": "gallon" },
+    { "name": "Ground Beef", "quantity": 1, "category": "meat", "unit": "lb" }
+  ]
+}
+
+CATEGORIES: produce, meat, dairy, bakery, frozen, pantry, beverages, household, other.
+
+RULES:
+1. Infer quantity from text (e.g., "2 apples" -> 2). Default to 1.
+2. Infer category based on item.
+3. Clean up names (Title Case).
+4. Return JSON object with "items" array.`;
+
+    try {
+        const response = await fetch(GROQ_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+            },
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: rawText }
+                ],
+                temperature: 0.1,
+                response_format: { type: 'json_object' }
+            }),
+        });
+
+        if (!response.ok) throw new Error('AI request failed');
+
+        const data = await response.json();
+        const content = data.choices[0]?.message?.content;
+        const parsed = JSON.parse(content);
+
+        return parsed.items || [];
+
+    } catch (error) {
+        console.error('AI List Parsing Error:', error);
+        // Fallback: simple newline split
+        return rawText.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+            .map(name => ({ name, quantity: 1, category: 'other' }));
+    }
+}
