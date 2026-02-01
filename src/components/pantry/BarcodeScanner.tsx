@@ -16,10 +16,12 @@ interface ProductInfo {
     brand?: string;
     category?: string;
     image?: string;
+    quantity?: number;
+    unit?: string;
 }
 
 export default function BarcodeScanner({ onClose }: Props) {
-    // Refs
+    // ... (refs and state unchanged)
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const mountedRef = useRef(false);
 
@@ -33,6 +35,18 @@ export default function BarcodeScanner({ onClose }: Props) {
 
     // Stores
     const { addToast } = useUIStore();
+
+    // Helper to parse quantity string "500 g" -> {q: 500, u: 'g'}
+    const parseQuantity = (qtyStr?: string): { quantity: number, unit: string } => {
+        if (!qtyStr) return { quantity: 1, unit: 'unit' };
+
+        // Match numbers followed by text (e.g. 500g, 500 g, 1.5L)
+        const match = qtyStr.match(/^([\d.]+)\s*([a-zA-Z]+)$/);
+        if (match) {
+            return { quantity: parseFloat(match[1]), unit: match[2].toLowerCase() };
+        }
+        return { quantity: 1, unit: 'unit' };
+    };
 
     // Initialize Scanner
     const startScanner = useCallback(async () => {
@@ -111,11 +125,17 @@ export default function BarcodeScanner({ onClose }: Props) {
             }
 
             if ((data.status === 1 || data.status === '1') && product) {
+                // Parse quantity
+                const rawQty = product.quantity || product.product_quantity;
+                const { quantity, unit } = parseQuantity(rawQty);
+
                 setScannedProduct({
                     name: product.product_name || product.generic_name || 'Unknown Product',
                     brand: product.brands,
                     category: product.categories_tags?.[0]?.replace('en:', ''),
-                    image: product.image_front_small_url
+                    image: product.image_front_small_url,
+                    quantity,
+                    unit
                 });
             } else {
                 const msg = `Product not found (${decodedText}).`;
@@ -159,7 +179,6 @@ export default function BarcodeScanner({ onClose }: Props) {
     const handleResume = async () => {
         setScannedProduct(null);
         setError(null);
-        // setIsScanning(true); - removed
         if (scannerRef.current) {
             try {
                 await scannerRef.current.resume();
@@ -178,22 +197,7 @@ export default function BarcodeScanner({ onClose }: Props) {
         if (!scannerRef.current) return;
 
         try {
-            // Check capabilities first if needed, but for now try apply directly
-            // const track = scannerRef.current.getRunningTrackCameraCapabilities();
-            // This is a direct video track access if possible, or use library method
-            // Html5Qrcode exposes applyVideoConstraints to the running track
-            // But getting the actual media stream track is tricky via this wrapper
-            // Let's rely on standard constraints update if supported
-
-            // Standard approach: Html5Qrcode doesn't have simple toggleTorch()
-            // We have to inspect the video track from the dom element or use applyVideoConstraints
-
-            // Simpler approach for now:
             const html5QrCode = scannerRef.current;
-            // @ts-ignore - internal API access or verify support in type defs
-            // If the library version supports it. If not, we might need a workaround.
-            // Documentation says: applyVideoConstraints(constraints) returns Promise
-
             await html5QrCode.applyVideoConstraints({
                 advanced: [{ torch: !isTorchOn } as any]
             });
@@ -208,12 +212,18 @@ export default function BarcodeScanner({ onClose }: Props) {
         if (!scannedProduct) return;
 
         const category = detectIngredientCategory(scannedProduct.name);
-        const unit = suggestUnit(scannedProduct.name, category); // Uses imported service
+        const finalUnit = suggestUnit(scannedProduct.name, category);
+
+        // Use scanned unit if plausible, otherwise fall back to suggested
+        // Prioritize scanned quantity if > 1
+        const unitToUse = (scannedProduct.unit && scannedProduct.unit !== 'unit')
+            ? scannedProduct.unit
+            : finalUnit;
 
         actionService.addPantryItem({
             name: scannedProduct.name,
-            quantity: 1,
-            unit: unit,
+            quantity: scannedProduct.quantity || 1,
+            unit: unitToUse,
             category: category
         });
 
