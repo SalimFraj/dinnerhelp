@@ -57,9 +57,10 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true
+      '/api/tabscanner': {
+        target: 'https://api.tabscanner.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/tabscanner/, '/api/2')
       }
     }
   }

@@ -1,6 +1,10 @@
 {
     "rewrites": [
         {
+            "source": "/api/tabscanner/:path*",
+            "destination": "https://api.tabscanner.com/api/2/:path*"
+        },
+        {
             "source": "/(.*)",
             "destination": "/index.html"
         }

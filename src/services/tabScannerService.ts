@@ -1,5 +1,5 @@
 const API_KEY = import.meta.env.VITE_TABSCANNER_API_KEY || '';
-const API_URL = 'https://api.tabscanner.com/api/2';
+const API_URL = '/api/tabscanner';
 
 export interface TabScannerItem {
     description: string;
