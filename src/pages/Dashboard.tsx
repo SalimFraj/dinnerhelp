@@ -196,7 +196,7 @@ export default function Dashboard() {
                                 <TrendingUp size={20} />
                             </div>
                             <div className="stat-content">
-                                <span className="stat-value">Analytics</span>
+                                <span className="stat-value" style={{ fontSize: 'var(--font-size-lg)' }}>Analytics</span>
                                 <span className="stat-label">Spending</span>
                             </div>
                         </Link>
