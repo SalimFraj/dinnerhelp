@@ -19,7 +19,12 @@ export default async function handler(request, response) {
         return response.status(400).json({ error: 'Token is required' });
     }
 
-    const apiKey = process.env.VITE_TABSCANNER_API_KEY;
+    const apiKey = process.env.VITE_TABSCANNER_API_KEY || process.env.TABSCANNER_API_KEY;
+
+    if (!apiKey) {
+        console.error('Configuration Error: Missing API Key');
+        return response.status(500).json({ error: 'Server configuration error: Missing TabScanner API Key' });
+    }
 
     try {
         const apiResponse = await fetch(`https://api.tabscanner.com/api/2/result/${token}`, {
@@ -33,6 +38,9 @@ export default async function handler(request, response) {
         return response.status(apiResponse.status).json(data);
     } catch (error) {
         console.error('Proxy Error:', error);
-        return response.status(500).json({ error: 'Failed to fetch from TabScanner' });
+        return response.status(500).json({
+            error: 'Failed to fetch from TabScanner',
+            details: error.message
+        });
     }
 }
