@@ -40,7 +40,8 @@ export default async function handler(req, res) {
                 'apikey': apiKey,
                 'content-type': req.headers['content-type'] // crucial for multipart bounds
             },
-            body: req // Pass the stream directly
+            body: req, // Pass the stream directly
+            duplex: 'half' // Required for Node.js fetch with streaming body
         });
 
         const data = await tabScannerResponse.json();

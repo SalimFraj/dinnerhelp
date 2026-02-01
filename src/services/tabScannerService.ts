@@ -37,6 +37,10 @@ export const processReceipt = async (file: File): Promise<string> => {
 
         const data = await response.json();
 
+        if (!response.ok) {
+            throw new Error(data.error || `Server Error: ${response.status}`);
+        }
+
         if (data.success) {
             return data.token;
         } else {
