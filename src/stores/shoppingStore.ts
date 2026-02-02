@@ -302,8 +302,26 @@ export const useShoppingStore = create<ShoppingState>()(
 
                 // Crucial: After adding items to pantry, we need to ensure the PANTRY store syncs immediately
                 // However, addIngredientSmart calls syncPantry internally.
-                // But we ALSO need to clear the shopping list and sync THAT.
-                get().clearCheckedItems(listId);
+                // But we ALSO need to uncheck the items (not remove them) and sync THAT.
+
+                set((state) => {
+                    const params = {
+                        lists: state.lists.map((l) => {
+                            if (l.id !== listId) return l;
+                            return {
+                                ...l,
+                                items: l.items.map(item => ({ ...item, checked: false }))
+                            };
+                        })
+                    };
+
+                    const user = useAuthStore.getState().user;
+                    if (user) {
+                        const updatedList = params.lists.find(l => l.id === listId);
+                        if (updatedList) syncShoppingList(user.uid, updatedList.items);
+                    }
+                    return params;
+                });
 
                 // Force manual sync check for pantry if needed (though addIngredientSmart should handle it)
                 const user = useAuthStore.getState().user;
