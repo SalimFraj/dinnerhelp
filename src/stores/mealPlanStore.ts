@@ -13,6 +13,7 @@ interface MealPlanState {
     getMealsForDate: (date: string) => MealPlan[];
     getMealsForWeek: (startDate: string) => MealPlan[];
     clearWeek: (startDate: string) => void;
+    clearAll: () => void;
 }
 
 export const useMealPlanStore = create<MealPlanState>()(
@@ -97,6 +98,12 @@ export const useMealPlanStore = create<MealPlanState>()(
                     if (user) syncMealPlans(user.uid, params.mealPlans);
                     return params;
                 });
+            },
+
+            clearAll: () => {
+                set({ mealPlans: [] });
+                const user = useAuthStore.getState().user;
+                if (user) syncMealPlans(user.uid, []);
             },
         }),
         {

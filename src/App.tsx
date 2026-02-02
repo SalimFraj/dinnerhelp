@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Layout from './components/Layout';
@@ -8,10 +8,11 @@ import Recipes from './pages/Recipes';
 import Shopping from './pages/Shopping';
 import MealPlan from './pages/MealPlan';
 import RecipeDetail from './pages/RecipeDetail';
-import Chat from './pages/Chat';
-import Analytics from './pages/Analytics';
-import Auth from './pages/Auth';
-import FamilySettings from './pages/FamilySettings';
+const Chat = lazy(() => import('./pages/Chat'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const Auth = lazy(() => import('./pages/Auth'));
+const FamilySettings = lazy(() => import('./pages/FamilySettings'));
+const Settings = lazy(() => import('./pages/Settings'));
 import { useAuthStore } from './stores/authStore';
 import './index.css';
 
@@ -80,6 +81,7 @@ function App() {
             <Route path="chat" element={<Chat />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="family" element={<FamilySettings />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
       </AnimatePresence>

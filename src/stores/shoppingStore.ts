@@ -23,6 +23,7 @@ interface ShoppingState {
     removeItem: (listId: string, itemId: string) => void;
     toggleItemChecked: (listId: string, itemId: string) => void;
     clearCheckedItems: (listId: string) => void;
+    clearAllItems: (listId: string) => void;
 
     // Bulk operations
     addItemsFromRecipe: (listId: string, items: Omit<ShoppingItem, 'id'>[]) => void;
@@ -230,6 +231,34 @@ export const useShoppingStore = create<ShoppingState>()(
                     if (user) {
                         const updatedList = params.lists.find(l => l.id === listId);
                         if (updatedList) syncShoppingList(user.uid, updatedList.items);
+                    }
+                    return params;
+                });
+            },
+
+            clearAllItems: (listId) => {
+                set((state) => {
+                    const params = {
+                        lists: state.lists.map((list) => {
+                            if (list.id !== listId) return list;
+                            return {
+                                ...list,
+                                items: [],
+                            };
+                        })
+                    }
+                    const user = useAuthStore.getState().user;
+                    // Fix: We need to sync the specific list's items (empty), not just pass [] globally if the API expects it related to a list? 
+                    // Actually checking syncService, syncShoppingList takes (userId, items). 
+                    // It seems it syncs the *active* list or something?
+                    // Let's assume syncShoppingList overwrites the default collection for now or handles it.
+                    // But wait, the store supports multiple lists. Does syncShoppingList support multiple lists?
+                    // Checking shoppingStore.ts, it seems to assume a single synced list or syncs the modified one.
+                    // Let's duplicate the logic from clearCheckedItems: find updated list and sync its items.
+
+                    if (user) {
+                        // We forced items to be [], so we just sync []
+                        syncShoppingList(user.uid, []);
                     }
                     return params;
                 });

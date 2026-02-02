@@ -9,7 +9,8 @@ import {
     EyeOff,
     Loader,
     ChefHat,
-    AlertCircle
+    AlertCircle,
+    Settings
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { useUIStore } from '../stores';
@@ -64,6 +65,15 @@ export default function Auth() {
                         onClick={() => navigate('/')}
                     >
                         Continue to App
+                    </button>
+
+                    <button
+                        className="btn btn-secondary btn-lg auth-submit"
+                        onClick={() => navigate('/settings')}
+                        style={{ marginBottom: '1rem', background: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                    >
+                        <Settings size={20} style={{ marginRight: '0.5rem' }} />
+                        Settings
                     </button>
 
                     <button

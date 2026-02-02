@@ -13,6 +13,7 @@ interface RecipeState {
     deleteRecipe: (id: string) => void; // Alias for removeRecipe for clearer intent
     toggleFavorite: (id: string, recipe?: Recipe) => void;
     rateRecipe: (id: string, rating: number) => void;
+    clearAll: () => void;
     getFavorites: () => Recipe[];
     getCustomRecipes: () => Recipe[];
     searchRecipes: (query: string) => Recipe[];
@@ -143,6 +144,15 @@ export const useRecipeStore = create<RecipeState>()(
                     ),
                 }));
                 // Ratings are local only for now unless custom recipe
+            },
+
+            clearAll: () => {
+                set({ recipes: [], favorites: [] });
+                const user = useAuthStore.getState().user;
+                if (user) {
+                    syncRecipes(user.uid, []);
+                    syncFavorites(user.uid, []);
+                }
             },
 
             getFavorites: () => {
