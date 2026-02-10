@@ -53,7 +53,7 @@ A premium Progressive Web App (PWA) for smart dinner planning. Built with React,
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/dinnerhelp.git
+git clone https://github.com/SalimFraj/dinnerhelp.git
 cd dinnerhelp
 
 # Install dependencies

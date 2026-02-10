@@ -119,7 +119,6 @@ export default function BarcodeScanner({ onClose }: Props) {
 
             // Attempt 2: Try adding leading 0 (UPC -> EAN13)
             if (data.status !== 1 && decodedText.length === 12) {
-                console.log('Retrying with leading zero...');
                 data = await fetchProduct(`0${decodedText}`);
                 product = data.product;
             }
@@ -140,7 +139,6 @@ export default function BarcodeScanner({ onClose }: Props) {
             } else {
                 const msg = `Product not found (${decodedText}).`;
                 setError(msg);
-                console.log('Lookup failed:', data);
 
                 setTimeout(() => {
                     handleResume();

@@ -1,7 +1,6 @@
 import type { Ingredient, Recipe } from '../types';
 
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_PROXY_URL = '/api/groq';
 
 export interface SubstitutionResult {
     original: string;
@@ -27,18 +26,12 @@ export interface GeneratedMealPlan {
 }
 
 async function callGroqAPI(messages: { role: string; content: string }[]) {
-    if (!GROQ_API_KEY) {
-        throw new Error('Groq API key not configured');
-    }
-
-    const response = await fetch(GROQ_API_URL, {
+    const response = await fetch(GROQ_PROXY_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
             messages,
             temperature: 0.7,
             max_tokens: 2048,

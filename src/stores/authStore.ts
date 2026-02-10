@@ -85,7 +85,6 @@ export const useAuthStore = create<AuthState>()(
                             if (data) {
                                 // Update local stores with cloud data
                                 // This enables real-time sync across devices
-                                console.log('Received cloud update:', data.lastSynced);
 
                                 // Process the updates (same logic as loadFromCloud)
                                 // Process the updates (same logic as loadFromCloud)

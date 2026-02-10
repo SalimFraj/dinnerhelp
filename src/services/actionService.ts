@@ -56,7 +56,7 @@ export const actionService = {
                 // If pantry is low, just remove perfectly or leave at 0? 
                 // Let's protect against negative numbers
 
-                // TODO: Better Unit Conversion (lb vs oz, kg vs g)
+
                 // For now, valid if units loosely match or one is missing
 
                 let newQty = match.quantity;

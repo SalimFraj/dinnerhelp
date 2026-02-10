@@ -26,7 +26,6 @@ export default function VoiceModal() {
         try {
             // Use smart intent processing
             const intent = await processVoiceIntent(text);
-            console.log('Voice intent:', intent);
 
             switch (intent.type) {
                 case 'ADD_PANTRY':

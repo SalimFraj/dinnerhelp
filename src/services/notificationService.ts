@@ -17,18 +17,15 @@ export async function requestNotificationPermission(): Promise<string | null> {
         const permission = await Notification.requestPermission();
 
         if (permission !== 'granted') {
-            console.log('Notification permission denied');
             return null;
         }
 
         const messaging = await getMessagingInstance();
         if (!messaging) {
-            console.log('Messaging not supported');
             return null;
         }
 
         const token = await getToken(messaging, { vapidKey: VAPID_KEY });
-        console.log('FCM Token:', token);
         return token;
     } catch (error) {
         console.error('Error getting FCM token:', error);
@@ -52,12 +49,10 @@ export function onForegroundMessage(callback: (payload: MessagePayload) => void)
 // Show a local notification (for testing or fallback)
 export function showLocalNotification(data: NotificationData): void {
     if (!('Notification' in window)) {
-        console.log('Notifications not supported');
         return;
     }
 
     if (Notification.permission !== 'granted') {
-        console.log('Notification permission not granted');
         return;
     }
 

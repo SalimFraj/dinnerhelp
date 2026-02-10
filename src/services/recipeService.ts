@@ -106,12 +106,6 @@ export async function generateAISuggestions(
     favoriteRecipes: string[] = [],
     count: number = 21 // Default to 21 for full week plan, set to 3 for quick suggestions
 ): Promise<Recipe[]> {
-    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-
-    if (!apiKey) {
-        throw new Error('Groq API key not configured');
-    }
-
     const favoritesContext = favoriteRecipes.length > 0
         ? `User loves these recipes: ${favoriteRecipes.slice(0, 5).join(', ')}. Use similar flavor profiles.`
         : '';
@@ -148,14 +142,12 @@ Respond ONLY in this valid JSON format (no markdown code blocks):
   ]
 }`;
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch('/api/groq', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
             messages: [
                 {
                     role: 'system',
@@ -219,20 +211,12 @@ Respond ONLY in this valid JSON format (no markdown code blocks):
 
 // Get AI substitution suggestions
 export async function getSubstitutions(ingredient: string): Promise<string[]> {
-    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-
-    if (!apiKey) {
-        return [];
-    }
-
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch('/api/groq', {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
             messages: [
                 {
                     role: 'user',

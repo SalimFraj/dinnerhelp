@@ -1,7 +1,6 @@
 import type { Ingredient } from '../types';
 
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_PROXY_URL = '/api/groq';
 
 interface ChatResponse {
     message: string;
@@ -69,10 +68,6 @@ export async function sendChatMessage(
     pantryIngredients: Ingredient[],
     conversationHistory: { role: 'user' | 'assistant'; content: string }[]
 ): Promise<ChatResponse> {
-    if (!GROQ_API_KEY) {
-        throw new Error('Groq API key not configured. Add VITE_GROQ_API_KEY to your .env file.');
-    }
-
     const systemPrompt = buildSystemPrompt(pantryIngredients);
 
     const messages = [
@@ -85,14 +80,12 @@ export async function sendChatMessage(
     ];
 
     try {
-        const response = await fetch(GROQ_API_URL, {
+        const response = await fetch(GROQ_PROXY_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${GROQ_API_KEY}`,
             },
             body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
                 messages,
                 temperature: 0.7,
                 max_tokens: 1024,
@@ -123,10 +116,6 @@ export type VoiceIntent =
     | { type: 'CHAT'; query: string };
 
 export async function processVoiceIntent(transcript: string): Promise<VoiceIntent> {
-    if (!GROQ_API_KEY) {
-        throw new Error('Groq API key missing');
-    }
-
     const systemPrompt = `You are a smart home assistant intent parser.
 Extract the user's intent from the voice transcript.
 Return strictly valid JSON matching this schema:
@@ -149,14 +138,12 @@ If it's a question or general request, use CHAT.
 If it's a navigation command, use NAVIGATE.`;
 
     try {
-        const response = await fetch(GROQ_API_URL, {
+        const response = await fetch(GROQ_PROXY_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${GROQ_API_KEY}`,
             },
             body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: transcript }
@@ -191,11 +178,6 @@ export const quickPrompts = [
 ];
 
 export async function cleanReceiptText(items: { name: string; quantity?: number; price?: number }[]): Promise<{ name: string; quantity?: number; price?: number; originalName: string }[]> {
-    if (!GROQ_API_KEY) {
-        console.warn('Groq API Key missing, skipping AI cleaning');
-        return items.map(i => ({ ...i, originalName: i.name }));
-    }
-
     const itemStrings = items.map(i => `- ${i.name}`).join('\n');
 
     const systemPrompt = `You are an advanced receipt parser for a smart pantry app.
@@ -233,14 +215,12 @@ JSON FORMAT:
 }`;
 
     try {
-        const response = await fetch(GROQ_API_URL, {
+        const response = await fetch(GROQ_PROXY_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${GROQ_API_KEY}`,
             },
             body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: itemStrings }
@@ -285,11 +265,6 @@ JSON FORMAT:
 }
 
 export async function parseShoppingList(rawText: string): Promise<{ name: string; quantity: number; category?: string }[]> {
-    if (!GROQ_API_KEY) {
-        console.warn('Groq API Key missing, skipping AI parsing');
-        return rawText.split('\n').filter(s => s.trim()).map(s => ({ name: s.trim(), quantity: 1 }));
-    }
-
     const systemPrompt = `You are a smart shopping list parser.
 Your job is to convert unstructured text into a structured shopping list.
 
@@ -315,14 +290,12 @@ RULES:
 4. Return JSON object with "items" array.`;
 
     try {
-        const response = await fetch(GROQ_API_URL, {
+        const response = await fetch(GROQ_PROXY_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${GROQ_API_KEY}`,
             },
             body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: rawText }
