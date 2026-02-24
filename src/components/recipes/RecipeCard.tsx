@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Clock, Users, Heart, Sparkles, Check } from 'lucide-react';
+import { Clock, Users, Heart, Sparkles, AlertCircle, Check } from 'lucide-react';
 import { useRecipeStore } from '../../stores';
 import type { Recipe } from '../../types';
 import './RecipeCard.css';
@@ -9,11 +9,11 @@ import { Trash2 } from 'lucide-react'; // Import Trash2
 
 interface Props {
     recipe: Recipe;
-    matchCount?: number;
+    missingCount?: number;
     onDelete?: (id: string) => void;
 }
 
-export default function RecipeCard({ recipe, matchCount = 0, onDelete }: Props) {
+export default function RecipeCard({ recipe, missingCount = 0, onDelete }: Props) {
     const { toggleFavorite, favorites } = useRecipeStore();
     const isFavorite = favorites.includes(recipe.id);
 
@@ -75,10 +75,15 @@ export default function RecipeCard({ recipe, matchCount = 0, onDelete }: Props) 
                     )}
 
                     {/* Match indicator */}
-                    {matchCount > 0 && (
-                        <span className="match-badge">
+                    {missingCount === 0 ? (
+                        <span className="match-badge ready">
                             <Check size={12} />
-                            {matchCount} match{matchCount > 1 ? 'es' : ''}
+                            Ready to cook!
+                        </span>
+                    ) : missingCount > 0 && (
+                        <span className="match-badge missing">
+                            <AlertCircle size={12} />
+                            {missingCount} missing
                         </span>
                     )}
                 </div>

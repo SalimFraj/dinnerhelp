@@ -108,12 +108,13 @@ export default function Recipes() {
         }
     };
 
-    // Calculate ingredient matches
-    const getMatchCount = (recipe: Recipe) => {
+    // Calculate missing ingredients (not in pantry)
+    const getMissingCount = (recipe: Recipe) => {
         const pantryNames = ingredients.map(i => i.name.toLowerCase());
-        return recipe.ingredients.filter(ri =>
+        const matchCount = recipe.ingredients.filter(ri =>
             pantryNames.some(pn => ri.name.toLowerCase().includes(pn) || pn.includes(ri.name.toLowerCase()))
         ).length;
+        return recipe.ingredients.length - matchCount;
     };
 
     // Filter, search, and sort recipes
@@ -155,9 +156,9 @@ export default function Recipes() {
             );
         }
 
-        // Sort by match count (highest first) for Discover tab
+        // Sort by fewest missing ingredients first for Discover tab
         if (activeTab === 'discover') {
-            result.sort((a, b) => getMatchCount(b) - getMatchCount(a));
+            result.sort((a, b) => getMissingCount(a) - getMissingCount(b));
         }
 
         return result;
@@ -301,7 +302,7 @@ export default function Recipes() {
                                 >
                                     <RecipeCard
                                         recipe={recipe}
-                                        matchCount={getMatchCount(recipe)}
+                                        missingCount={getMissingCount(recipe)}
                                         onDelete={activeTab === 'custom' ? (id) => {
                                             // Handle delete
                                             if (window.confirm(`Are you sure you want to delete "${recipe.title}"?`)) {
