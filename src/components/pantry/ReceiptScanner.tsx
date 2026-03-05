@@ -239,9 +239,9 @@ export default function ReceiptScanner({ onClose }: Props) {
                             <p className="items-instruction">
                                 Select items to add to your pantry:
                             </p>
-                            <div className="items-list">
+                            <div className="receipt-items-list">
                                 {extractedItems.map((item, index) => (
-                                    <label key={index} className="item-checkbox">
+                                    <label key={index} className="receipt-item-row">
                                         <input
                                             type="checkbox"
                                             checked={item.selected}
@@ -250,18 +250,18 @@ export default function ReceiptScanner({ onClose }: Props) {
                                         <span className="checkmark">
                                             {item.selected && <Check size={14} />}
                                         </span>
-                                        <div className="item-content">
-                                            <span className="item-name">
+                                        <div className="receipt-item-content">
+                                            <span className="receipt-item-name">
                                                 {item.name}
                                             </span>
                                             {item.name !== item.originalName && (
-                                                <span className="item-original">
+                                                <span className="receipt-item-original">
                                                     Original: {item.originalName}
                                                 </span>
                                             )}
                                         </div>
                                         {item.price && (
-                                            <span className="item-price">
+                                            <span className="receipt-item-price">
                                                 ${item.price.toFixed(2)}
                                             </span>
                                         )}
