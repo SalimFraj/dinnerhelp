@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { X, Camera, Loader, Check, Upload, Receipt } from 'lucide-react';
+import { X, Camera, Loader, Check, Upload, Receipt, Pencil } from 'lucide-react';
 import { useUIStore } from '../../stores';
 import { actionService } from '../../services/actionService';
 import { processReceipt, getReceiptResult, type TabScannerResult } from '../../services/tabScannerService';
@@ -19,6 +19,50 @@ interface ExtractedItem {
     price?: number;
 }
 
+// Non-grocery keywords to filter out from receipt OCR
+const RECEIPT_NOISE = new Set([
+    'subtotal', 'sub total', 'total', 'tax', 'hst', 'gst', 'pst',
+    'cash', 'change', 'visa', 'mastercard', 'debit', 'credit',
+    'tend', 'tendered', 'balance', 'payment', 'paid',
+    'thank you', 'thanks', 'come again', 'welcome',
+    'rewards', 'points', 'savings', 'discount', 'coupon',
+    'member', 'loyalty', 'card', 'receipt',
+    'refund', 'void', 'exchange',
+    'cashier', 'store', 'register', 'terminal',
+    'date', 'time', 'trans', 'transaction',
+]);
+
+function isReceiptNoise(description: string): boolean {
+    const lower = description.toLowerCase().trim();
+    // Direct match
+    if (RECEIPT_NOISE.has(lower)) return true;
+    // Partial match — line starts/contains a noise keyword
+    for (const keyword of RECEIPT_NOISE) {
+        if (lower.startsWith(keyword) || lower === keyword) return true;
+    }
+    // Filter lines that are mostly numbers/codes (e.g. "12345678" or "#001")
+    if (/^[\d#\-\s.*]+$/.test(lower)) return true;
+    return false;
+}
+
+/** Merge items with the same cleaned name, summing quantities and prices */
+function mergeItems(items: ExtractedItem[]): ExtractedItem[] {
+    const map = new Map<string, ExtractedItem>();
+    for (const item of items) {
+        const key = item.name.toLowerCase().trim();
+        const existing = map.get(key);
+        if (existing) {
+            existing.quantity = (existing.quantity || 1) + (item.quantity || 1);
+            if (item.price) {
+                existing.price = (existing.price || 0) + item.price;
+            }
+        } else {
+            map.set(key, { ...item });
+        }
+    }
+    return Array.from(map.values());
+}
+
 export default function ReceiptScanner({ onClose }: Props) {
     const [image, setImage] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -26,6 +70,7 @@ export default function ReceiptScanner({ onClose }: Props) {
     const [statusText, setStatusText] = useState('');
     const [extractedItems, setExtractedItems] = useState<ExtractedItem[]>([]);
     const [scannedData, setScannedData] = useState<TabScannerResult | null>(null);
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { addToast } = useUIStore();
@@ -86,9 +131,9 @@ export default function ReceiptScanner({ onClose }: Props) {
         setIsCleaning(true); // Start AI cleaning phase
         setScannedData(result);
 
-        // Map initial raw items
+        // Map initial raw items — filter short lines AND receipt noise
         const rawItems = result.lines
-            .filter(line => line.description.length > 2)
+            .filter(line => line.description.length > 2 && !isReceiptNoise(line.description))
             .map(line => ({
                 name: line.description,
                 quantity: line.qty,
@@ -99,20 +144,21 @@ export default function ReceiptScanner({ onClose }: Props) {
             // 3. AI Cleaning Step
             const cleaned = await cleanReceiptText(rawItems);
 
-            setExtractedItems(cleaned.map(item => ({
-                ...item,
-                selected: true
-            })));
+            // 4. Merge duplicates (e.g. same item on two lines)
+            const withSelection = cleaned.map(item => ({ ...item, selected: true }));
+            const merged = mergeItems(withSelection);
 
-            addToast({ type: 'success', message: 'Receipt scanned & cleaned!' });
+            setExtractedItems(merged);
+            addToast({ type: 'success', message: `Receipt scanned — ${merged.length} items found!` });
         } catch (error) {
             console.error('Cleaning failed', error);
-            // Fallback to raw items
-            setExtractedItems(rawItems.map(item => ({
+            // Fallback to raw items (still merge duplicates)
+            const fallback = rawItems.map(item => ({
                 ...item,
                 originalName: item.name,
                 selected: true
-            })));
+            }));
+            setExtractedItems(mergeItems(fallback));
         } finally {
             setIsCleaning(false);
         }
@@ -131,6 +177,15 @@ export default function ReceiptScanner({ onClose }: Props) {
                 i === index ? { ...item, selected: !item.selected } : item
             )
         );
+    };
+
+    const handleRenameItem = (index: number, newName: string) => {
+        setExtractedItems(items =>
+            items.map((item, i) =>
+                i === index ? { ...item, name: newName } : item
+            )
+        );
+        setEditingIndex(null);
     };
 
     const handleAddItems = () => {
@@ -241,31 +296,64 @@ export default function ReceiptScanner({ onClose }: Props) {
                             </p>
                             <div className="receipt-items-list">
                                 {extractedItems.map((item, index) => (
-                                    <label key={index} className="receipt-item-row">
-                                        <input
-                                            type="checkbox"
-                                            checked={item.selected}
-                                            onChange={() => toggleItem(index)}
-                                        />
-                                        <span className="checkmark">
-                                            {item.selected && <Check size={14} />}
-                                        </span>
-                                        <div className="receipt-item-content">
-                                            <span className="receipt-item-name">
-                                                {item.name}
+                                    <div key={index} className="receipt-item-row">
+                                        <label className="receipt-item-check">
+                                            <input
+                                                type="checkbox"
+                                                checked={item.selected}
+                                                onChange={() => toggleItem(index)}
+                                            />
+                                            <span className="checkmark">
+                                                {item.selected && <Check size={14} />}
                                             </span>
-                                            {item.name !== item.originalName && (
-                                                <span className="receipt-item-original">
-                                                    Original: {item.originalName}
-                                                </span>
+                                        </label>
+                                        <div className="receipt-item-content">
+                                            {editingIndex === index ? (
+                                                <input
+                                                    type="text"
+                                                    className="receipt-item-edit-input"
+                                                    defaultValue={item.name}
+                                                    autoFocus
+                                                    onBlur={(e) => handleRenameItem(index, e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            handleRenameItem(index, (e.target as HTMLInputElement).value);
+                                                        }
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            ) : (
+                                                <>
+                                                    <span className="receipt-item-name">
+                                                        {item.name}
+                                                    </span>
+                                                    {item.name !== item.originalName && (
+                                                        <span className="receipt-item-original">
+                                                            Original: {item.originalName}
+                                                        </span>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
-                                        {item.price && (
+                                        {item.quantity && item.quantity > 1 && (
+                                            <span className="receipt-item-qty">×{item.quantity}</span>
+                                        )}
+                                        {item.price != null && item.price > 0 && (
                                             <span className="receipt-item-price">
                                                 ${item.price.toFixed(2)}
                                             </span>
                                         )}
-                                    </label>
+                                        <button
+                                            className="receipt-item-edit-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEditingIndex(editingIndex === index ? null : index);
+                                            }}
+                                            title="Edit name"
+                                        >
+                                            <Pencil size={14} />
+                                        </button>
+                                    </div>
                                 ))}
                             </div>
                             <div className="items-actions">

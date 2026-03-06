@@ -178,31 +178,39 @@ export const quickPrompts = [
 ];
 
 export async function cleanReceiptText(items: { name: string; quantity?: number; price?: number }[]): Promise<{ name: string; quantity?: number; price?: number; originalName: string }[]> {
-    const itemStrings = items.map(i => `- ${i.name}`).join('\n');
+    const itemStrings = items.map(i => {
+        const priceStr = i.price ? ` ($${i.price.toFixed(2)})` : '';
+        return `- ${i.name}${priceStr}`;
+    }).join('\n');
 
     const systemPrompt = `You are an advanced receipt parser for a smart pantry app.
 Your goal is to transform raw OCR receipt text into clean, clear, and standardized ingredient names.
 
 INPUT CONTEXT:
-The user scans a grocery receipt. The text often contains:
+The user scans a grocery receipt. Each line includes the raw OCR text and optionally the price.
+The text often contains:
 - Store brands (Kroger, Kirkland, Great Value) -> REMOVE these.
 - Abbreviations (chk, bnlss, sknlss) -> EXPAND these.
 - Weights/Pack sizes (1lb, 12oz, gal) -> KEEP if relevant to the item identity (e.g. "Milk Gallon"), REMOVE if just a quantity.
-- Gibberish or codes -> REMOVE.
+- Gibberish or codes -> REMOVE the entire line.
+- Non-grocery lines (tax, subtotal, rewards, discounts, payment methods) -> Return "SKIP" for these.
+
+Use the price as additional context to judge whether a line is a real item or noise.
+Lines with negative prices are usually discounts/coupons — return "SKIP" for those.
 
 EXAMPLES:
-"KROG LRG EGGS 12CT" -> "Large Eggs"
-"PC TRUF PARM CHP" -> "Truffle Parmesan Chips"
-"BNLSS SKNLSS CHCK BRST" -> "Boneless Skinless Chicken Breast"
-"ORG BANANAS" -> "Organic Bananas"
-"GAL WHL MILK" -> "Whole Milk"
-"AVOCADO LRG" -> "Avocado"
-"MTN DEW 12PK" -> "Mountain Dew"
+"KROG LRG EGGS 12CT ($3.49)" -> "Large Eggs"
+"PC TRUF PARM CHP ($5.99)" -> "Truffle Parmesan Chips"
+"BNLSS SKNLSS CHCK BRST ($8.99)" -> "Boneless Skinless Chicken Breast"
+"ORG BANANAS ($1.29)" -> "Organic Bananas"
+"GAL WHL MILK ($4.49)" -> "Whole Milk"
+"TAX ($2.15)" -> "SKIP"
+"SC DISC -$1.00" -> "SKIP"
 
 INSTRUCTIONS:
-1. Analyze each line item.
+1. Analyze each line item with its price context.
 2. Infer the likely product.
-3. Return a clean, Title Cased string for the pantry.
+3. Return a clean, Title Cased string for the pantry, or "SKIP" for non-grocery lines.
 4. If the item is ambiguous, make your best guess based on common grocery items.
 5. Return a JSON object with an "items" array strictly matching the input order.
 
@@ -210,6 +218,7 @@ JSON FORMAT:
 {
   "items": [
     "Clean Name 1",
+    "SKIP",
     "Clean Name 2"
   ]
 }`;
@@ -252,11 +261,14 @@ JSON FORMAT:
             cleanedNames = [];
         }
 
-        return items.map((item, index) => ({
-            ...item,
-            originalName: item.name,
-            name: cleanedNames[index] || item.name
-        }));
+        // Map cleaned names back, filtering out SKIP items
+        return items
+            .map((item, index) => ({
+                ...item,
+                originalName: item.name,
+                name: cleanedNames[index] || item.name
+            }))
+            .filter(item => item.name.toUpperCase() !== 'SKIP');
 
     } catch (error) {
         console.error('AI Receipt Cleaning Error:', error);
