@@ -1,6 +1,7 @@
 import { useEffect, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { Analytics as VercelAnalytics } from '@vercel/analytics/react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Pantry from './pages/Pantry';
@@ -85,6 +86,7 @@ function App() {
           </Route>
         </Routes>
       </AnimatePresence>
+      <VercelAnalytics />
     </BrowserRouter>
   );
 }
